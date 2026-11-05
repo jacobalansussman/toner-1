@@ -1,0 +1,502 @@
+%!PS-Adobe-3.0
+%%Title: TONER-1 Technical Explainer
+%%Creator: TONER-1 launch materials
+%%Pages: 2
+%%PageOrder: Ascend
+%%BoundingBox: 0 0 612 792
+%%DocumentMedia: Letter 612 792 0 () ()
+%%LanguageLevel: 2
+%%DocumentNeededResources: font Helvetica Helvetica-Bold Helvetica-Oblique
+%%+ font Times-Roman Times-Bold Times-Italic Courier Courier-Bold Symbol
+%%EndComments
+%%BeginProlog
+/TX 400 dict def
+TX begin
+
+% ---------- fonts: standard 35 only, re-encoded to add a few Latin glyphs ----------
+/MyEnc StandardEncoding 256 array copy def
+MyEnc 215 /multiply put
+MyEnc 176 /degree put
+/reenc { % /New /Old reenc
+  findfont dup length dict begin
+    { 1 index /FID ne { def } { pop pop } ifelse } forall
+    /Encoding MyEnc def currentdict
+  end definefont pop } bind def
+/F { exch findfont exch scalefont setfont } bind def          % /Name size F
+/sw { stringwidth pop } bind def
+/rshow { dup sw neg 0 rmoveto show } bind def
+/cshow { dup sw 2 div neg 0 rmoveto show } bind def
+/tshow { 0 3 -1 roll ashow } bind def                         % (s) track tshow
+/tsw { exch dup length 3 -1 roll mul exch sw add } bind def   % (s) track -> w
+/rtshow { 2 copy tsw neg 0 rmoveto tshow } bind def
+
+/LM 54 def /RM 558 def /CW 504 def
+
+% ---------- geometry ----------
+/rectp { newpath 4 2 roll moveto 1 index 0 rlineto 0 exch rlineto neg 0 rlineto closepath } bind def
+/rrectp { /rr exch def /rh exch def /rw exch def /ry exch def /rx exch def
+  newpath rx rr add ry moveto
+  rx rw add ry rx rw add ry rh add rr arct
+  rx rw add ry rh add rx ry rh add rr arct
+  rx ry rh add rx ry rr arct
+  rx ry rx rw add ry rr arct closepath } bind def
+/hline { % x1 x2 y w
+  setlinewidth /hy exch def newpath hy moveto hy lineto stroke } bind def
+/ahl 4.6 def /ahw 2.2 def
+/arrowhead { gsave 3 1 roll translate rotate newpath 0 0 moveto
+  ahl neg ahw lineto ahl neg ahw neg lineto closepath fill grestore } bind def
+/parrow { % [x0 y0 x1 y1 ... ] polyline with arrowhead at the end
+  /pa exch def /pn pa length def
+  /ax1 pa pn 4 sub get def /ay1 pa pn 3 sub get def
+  /ax2 pa pn 2 sub get def /ay2 pa pn 1 sub get def
+  /aa ay2 ay1 sub ax2 ax1 sub atan def
+  newpath pa 0 get pa 1 get moveto
+  2 2 pn 4 sub { /k exch def pa k get pa k 1 add get lineto } for
+  ax2 aa cos ahl 0.7 mul mul sub ay2 aa sin ahl 0.7 mul mul sub lineto stroke
+  ax2 ay2 aa arrowhead } bind def
+/patch { % x y w h : white knockout behind a label
+  gsave 1 setgray rectp fill grestore } bind def
+
+% ---------- word wrap ----------
+% Words prefixed with ` are set in the code font, ^ in the bold font.
+% ~ is a non-breaking space. A lone | starts a new paragraph.
+/wsz 9.4 def /wld 12.4 def /wfR /TR def /wfB /TB def /wfC /CR def
+/wcs 0.94 def /wbs 1 def /wdraw true def /wgray 0 def /wpar 1.5 def
+/wsetR { wfR findfont wsz scalefont setfont } bind def
+/wpunct { dup 46 eq 1 index 44 eq or 1 index 59 eq or exch 58 eq or } bind def
+/wtilde { dup length string copy dup length 1 sub 0 exch 1 exch
+  { 2 copy get 126 eq { 1 index exch 32 put } { pop } ifelse } for } bind def
+/wword1 {
+  /wtail () def
+  dup 0 get 96 eq { dup length 1 sub 1 exch getinterval /wfn wfC def /wfs wsz wcs mul def /wspec true def }
+  { dup 0 get 94 eq { dup length 1 sub 1 exch getinterval /wfn wfB def /wfs wsz wbs mul def /wspec false def }
+    { /wfn wfR def /wfs wsz def /wspec false def } ifelse } ifelse
+  wspec { dup length 1 gt { dup dup length 1 sub get wpunct {
+      dup dup length 1 sub 1 getinterval /wtail exch def
+      dup length 1 sub 0 exch getinterval } if } if } if
+  wtilde /wmain exch def } bind def
+/wplace {
+  wword1
+  wfn findfont wfs scalefont setfont wmain sw
+  wsetR wtail sw add /wwd exch def
+  wbol not { wcx wspw add wwd add wx ww add gt
+      { /wy wy wld sub def /wcx wx def } { /wcx wcx wspw add def } ifelse } if
+  wdraw { wcx wy moveto wfn findfont wfs scalefont setfont wmain show wsetR wtail show } if
+  /wcx wcx wwd add def /wbol false def } bind def
+/wrap { % (text) x y width  -> draws; /wy = last baseline
+  /ww exch def /wy exch def /wx exch def
+  wgray setgray wsetR /wspw ( ) sw def
+  /wcx wx def /wbol true def
+  { dup length 0 eq { pop exit } if
+    ( ) search { /wtok exch def pop /wrest exch def } { /wtok exch def () /wrest exch def } ifelse
+    wtok length 0 gt { wtok (|) eq { /wy wy wld wpar mul sub def /wcx wx def /wbol true def }
+                                   { wtok wplace } ifelse } if
+    wrest } loop
+  0 setgray } bind def
+/wmeasure { /wdraw false def wrap /wdraw true def wy } bind def   % -> last baseline
+
+% ---------- code blocks ----------
+/csz 6.8 def /cld 8.3 def /cpad 6 def /cgut 20 def /cextra 0 def /cxproc {} def
+/cfont { cbold { /CB } { /CR } ifelse csz F } bind def
+/cseg { { (...) search { show pop gsave 0.6 setgray (...) show currentpoint grestore moveto }
+          { show exit } ifelse } loop } bind def
+/cline { /cbold false def
+  dup length 0 gt { dup 0 get 37 eq } { false } ifelse { 0.45 setgray } { 0 setgray } ifelse
+  { (@@) search { cfont cseg pop /cbold cbold not def } { cfont cseg exit } ifelse } loop
+  0 setgray } bind def
+/cbh { length 2 idiv 1 sub cld mul cpad 2 mul add csz 0.95 mul add cextra add } bind def
+/codeblock { % [ (n) (line) ... ] x ytop w
+  /cw exch def /cyt exch def /cx exch def /cl exch def
+  /chh cl cbh def
+  gsave 0.925 setgray cx cyt chh sub cw chh rectp fill grestore
+  gsave 0 setgray cx cyt chh sub 1.6 chh rectp fill grestore
+  /cyy cyt cpad sub csz 0.72 mul sub def
+  0 2 cl length 1 sub { /ci exch def
+    0.55 setgray /CR 5.6 F cx cgut add 4 sub cyy moveto cl ci get rshow
+    0 setgray cx cgut add cyy moveto cl ci 1 add get cline
+    /cyy cyy cld sub def } for
+  cxproc
+  /cextra 0 def /cxproc {} def } bind def
+
+% ---------- page furniture ----------
+/pghead { % running header, same as the model card's
+  0 setgray /HB 7.2 F LM 731 moveto (TONER-1) 1.5 tshow
+  0.45 setgray /H 7.2 F (   /   ) show
+  0 setgray (TECHNICAL EXPLAINER) 1.5 tshow
+  0.35 setgray (RELEASE 1.0   /   NOVEMBER 2026) dup 1.5 tsw 1.5 sub RM exch sub 731 moveto 1.5 tshow
+  0 setgray LM RM 722 1.8 hline } bind def
+/pgfoot { % (Page n of 2)
+  LM RM 75 0.5 hline
+  0 setgray /HB 6.6 F RM 64 moveto rshow } bind def
+/kicker { % (text) y
+  LM exch moveto 0.4 setgray /HB 7.5 F 1.4 tshow 0 setgray } bind def
+/seclabel { % (text) y : hairline + tracked label
+  /sly exch def LM RM sly 10 add 0.5 hline LM sly moveto /HB 7 F 1.2 tshow } bind def
+/numdot { % (n) x y : black disc with white numeral
+  /ndy exch def /ndx exch def
+  newpath ndx ndy 6 0 360 arc fill
+  1 setgray /HB 6.6 F ndx ndy 2.35 sub moveto cshow 0 setgray } bind def
+
+% ---------- diagram pieces ----------
+/node { % x y w h [ /Font size gray (text) ... ]
+  /nl exch def /nh exch def /nw exch def /ny exch def /nx exch def
+  gsave 1 setgray nx ny nw nh rectp fill grestore
+  0 setgray 0.8 setlinewidth nx ny nw nh rectp stroke
+  /nth 0 def 0 4 nl length 1 sub { /k exch def /nth nth nl k 1 add get 1.2 mul add def } for
+  /nyy ny nh 2 div add nth 2 div add def
+  0 4 nl length 1 sub { /k exch def
+    /nyy nyy nl k 1 add get 1.2 mul sub def
+    nl k 2 add get setgray nl k get nl k 1 add get F
+    nx nw 2 div add nyy nl k 1 add get 0.22 mul add moveto nl k 3 add get cshow } for
+  0 setgray } bind def
+/laptop { % x y  (bottom-left of base; 48 x 30)
+  /ly exch def /lx exch def
+  0 setgray 0.9 setlinewidth
+  lx 5 add ly 4.5 add 38 25 2 rrectp gsave 1 setgray fill grestore stroke
+  lx 8 add ly 7.5 add 32 19 rectp 0.18 setgray fill
+  1 setgray /CB 7 F lx 11 add ly 15 add moveto ($) show
+  lx 17 add ly 15 add 4 5 rectp fill
+  0 setgray newpath lx ly moveto lx 48 add ly lineto lx 45 add ly 4 add lineto lx 3 add ly 4 add lineto closepath
+  gsave 0.7 setgray fill grestore stroke } bind def
+/paper { % x y w h
+  /ph exch def /pw exch def /py exch def /px exch def /pf 8 def
+  0 setgray 0.8 setlinewidth
+  newpath px py moveto px pw add py lineto px pw add py ph add pf sub lineto
+  px pw add pf sub py ph add lineto px py ph add lineto closepath
+  gsave 1 setgray fill grestore stroke
+  newpath px pw add pf sub py ph add moveto px pw add pf sub py ph add pf sub lineto
+  px pw add py ph add pf sub lineto closepath gsave 0.8 setgray fill grestore stroke
+  px 5 add px pw add 11 sub py ph add 9 sub 1.4 hline
+  0.65 setgray
+  [ 14 0.92 18 0.84 22 0.9 26 0.78 30 0.5 ] /pl exch def
+  0 2 pl length 1 sub { /k exch def
+    px 5 add px 5 add pw 10 sub pl k 1 add get mul add py ph add pl k get sub 0.7 hline } for
+  0 setgray } bind def
+end
+%%EndProlog
+
+%%BeginSetup
+TX begin
+mark { << /PageSize [612 792] >> setpagedevice } stopped cleartomark
+/H /Helvetica reenc /HB /Helvetica-Bold reenc /HO /Helvetica-Oblique reenc
+/TR /Times-Roman reenc /TB /Times-Bold reenc /TI /Times-Italic reenc
+/CR /Courier reenc /CB /Courier-Bold reenc
+%%EndSetup
+
+%%Page: 1 1
+%%BeginPageSetup
+/pgsave save def
+%%EndPageSetup
+0 setgray 0 setlinecap 0 setlinejoin
+pghead
+
+(HOW IT WORKS) 700 kicker
+/HB 25 F LM 674 moveto (How a print job runs a language model) show
+
+/wfR /TR def /wsz 12 def /wld 15.6 def
+(TONER-1 is the most capable language model ever to run entirely inside a print job.* It is one 595~KB PostScript file. Send it to a laser printer and the printer's own processor writes a short story, then prints it. The computer that sent it does no math.)
+LM 649 470 wrap
+/p1y wy def
+
+% ---------- three ideas ----------
+/colw 156 def /colg 18 def
+/ct p1y 28 sub def
+[ (01) (A print job is a program)
+  (PostScript, the language most laser printers speak, is not a file format but a complete programming language, stack-based like Forth. Send `3 `4 `add and the interpreter leaves 7 on its stack. It has variables, loops and floating-point math. A print job is simply a program; the printed page is a side effect of the drawing commands it calls.)
+  (02) (Printers are computers)
+  (To run those programs, every PostScript printer carries its own processor and memory. The 1985 Apple LaserWriter had a 12~MHz Motorola 68000 and 1.5~MB of RAM, a faster CPU than the original Macintosh it plugged into (a 68000 at about 7.8~MHz). Modern printers have far more, and spend most of it waiting for spreadsheets.)
+  (03) (An LLM is just arithmetic)
+  (Strip away the mystique and a language model is a long list of multiplications and additions: matrix-vector products, a normalization step, a softmax that turns scores into probabilities, and a weighted coin flip that picks the next word piece. Any language with loops and multiplication can run one. PostScript has both.)
+] /cols exch def
+/colbot ct def
+0 1 2 { /c exch def
+  /cx0 LM c colw colg add mul add def
+  cx0 cx0 colw add ct 1 hline
+  cx0 ct 14 sub moveto 0.4 setgray /HB 7.5 F cols c 3 mul get 1 tshow 0 setgray
+  /wfR /HB def /wsz 10.5 def /wld 13 def
+  cols c 3 mul 1 add get cx0 ct 29 sub colw wrap
+  /wfR /TR def /wfC /CR def /wsz 9.4 def /wld 12.4 def
+  cols c 3 mul 2 add get cx0 wy 15 sub colw wrap
+  wy colbot lt { /colbot wy def } if
+} for
+
+% ---------- the pipeline diagram ----------
+/DL colbot 33 sub def
+(THE PIPELINE) DL seclabel
+0.45 setgray /H 7 F RM DL moveto (What happens after you send toner1.ps to port 9100) rshow 0 setgray
+
+/PBT DL 66 sub def /PBH 186 def /PBB PBT PBH sub def
+/lx LM 23 add def /ly DL 44 sub def
+lx ly laptop
+/HB 7 F LM 86 add DL 22 sub moveto (YOUR LAPTOP) 1 tshow
+/CR 8 F LM 86 add DL 33 sub moveto (nc <printer-ip> 9100 < toner1.ps) show
+0.4 setgray /H 6.8 F LM 86 add DL 43.5 sub moveto (Sends 595 KB of plain text. Then waits. Host compute: 0 FLOPs.) show 0 setgray
+
+% printer enclosure
+0 setgray 1.3 setlinewidth LM PBB CW PBH 7 rrectp stroke
+/HB 7 F RM 10 sub PBT 13 sub moveto (INSIDE THE PRINTER) 1 rtshow
+0.4 setgray /H 6.6 F RM 10 sub PBT 22.5 sub moveto (PostScript interpreter on the printer's own CPU and RAM) rshow 0 setgray
+
+% loop frame
+/LFL LM 10 add def /LFR LM 368 add def /LFT PBT 32 sub def /LFB PBB 21 add def
+/NC LFT 52 sub def
+0.6 setlinewidth [2 2] 0 setdash LFL LFB LFR LFL sub LFT LFB sub rectp stroke [] 0 setdash
+LM 64 add LFT 3.5 sub (REPEAT UP TO 200 TIMES, ONE TOKEN PER PASS) 0.8 tsw 8 add 7 patch
+/HB 6 F LM 68 add LFT 2.1 sub moveto (REPEAT UP TO 200 TIMES, ONE TOKEN PER PASS) 0.8 tshow
+
+% chain nodes
+/EX LM 20 add def /EW 54 def
+/SX LM 88 add def /SW 122 def /SH 84 def
+/GX LM 224 add def /GW 52 def
+/QX LM 290 add def /QW 68 def
+EX NC 20 sub EW 40 [ /HB 7 0 (Embed) /HB 7 0 (token) /H 5.6 0.4 (look up 1 row) ] node
+GX NC 20 sub GW 40 [ /HB 7 0 (Logits) /H 5.6 0.4 (512 scores) ] node
+QX NC 20 sub QW 40 [ /HB 7 0 (Sample) /HB 7 0 (next token) /H 5.6 0.4 (temperature 0.8) ] node
+
+% the 5x layer stack
+/SY NC SH 2 div sub def
+0.6 setlinewidth
+2 -1 1 { /k exch def
+  gsave 1 setgray SX k 3 mul add SY k 3 mul add SW SH rectp fill grestore
+  0.55 setgray SX k 3 mul add SY k 3 mul add SW SH rectp stroke 0 setgray } for
+gsave 1 setgray SX SY SW SH rectp fill grestore
+0.8 setlinewidth SX SY SW SH rectp stroke
+/HB 6.2 F SX SW 2 div add SY SH add 10 sub moveto (5 \327 TRANSFORMER LAYER) dup 0.6 tsw 2 div neg 0 rmoveto 0.6 tshow
+[ (RMSNorm) (Attention + KV cache) (RMSNorm) (SwiGLU feed-forward) ] /subs exch def
+0 1 3 { /k exch def
+  /sby SY SH add 17 sub k 15.5 mul sub 13 sub def
+  gsave 0.9 setgray SX 8 add sby SW 16 sub 13 rectp fill grestore
+  /H 6.3 F SX SW 2 div add sby 4.4 add moveto subs k get cshow } for
+
+% chain arrows
+0 setgray 0.8 setlinewidth
+[ EX EW add NC SX NC ] parrow
+[ SX SW add NC GX NC ] parrow
+[ GX GW add NC QX NC ] parrow
+% feedback loop: sample -> embed
+/FBY LFB 11 add def
+[ QX QW 2 div add NC 20 sub QX QW 2 div add FBY EX EW 2 div add FBY EX EW 2 div add NC 20 sub ] parrow
+/fbx EX EW 2 div add QX QW 2 div add add 2 div def
+/HO 6.2 F (the new token becomes the next input) sw /fbw exch def
+fbx fbw 2 div sub 4 sub FBY 3.5 sub fbw 8 add 7 patch
+/HO 6.2 F fbx FBY 2.2 sub moveto (the new token becomes the next input) cshow
+
+% entry arrow from laptop into the interpreter
+[ lx 24 add ly 3 sub lx 24 add NC 20 add ] parrow
+/HB 6 F lx 31 add PBT 6 add moveto (TCP PORT 9100) 0.8 tshow
+0.4 setgray /HO 6.2 F lx 31 add PBT 12 sub moveto (interpreter defines 260,032 weights + vocab) show 0 setgray
+
+% output column
+/OX LM 396 add def /OW RM 10 sub OX sub def
+OX NC 20 sub OW 40 [ /HB 7 0 (Typeset) /HB 7 0 (the story) /H 5.6 0.4 (Times-Roman, word-wrapped) ] node
+OX NC 48 sub OW 18 [ /CB 7.5 0 (showpage) ] node
+[ QX QW add NC OX NC ] parrow
+[ OX OW 2 div add NC 20 sub OX OW 2 div add NC 30 sub ] parrow
+/ppw 28 def /pph 34 def /ppx OX OW 2 div add ppw 2 div sub def /ppy PBB 8 add def
+[ OX OW 2 div add NC 48 sub OX OW 2 div add ppy pph add ] parrow
+ppx ppy ppw pph paper
+/HB 6.5 F ppx 7 sub ppy pph 2 div add 2 sub moveto (PAPER) 0.8 rtshow
+
+% caption under the loop
+0.4 setgray /HO 6.5 F LFL PBB 8 add moveto (Each pass touches all 260,032 weights: the embedding table doubles as the output layer.) show 0 setgray
+/H 1 F
+
+% ---------- stat row ----------
+/STT PBB 26 sub def
+LM RM STT 1 hline
+[ (260,032) () (parameters) (int8, one scale per row)
+  (595) (KB) (the entire print job) (weights + vocab + program)
+  (55) (tok/s) (in Ghostscript 10.07) (Apple-silicon Mac, measured)
+  (0.3\2615) (tok/s) (on a real printer) (estimated, not yet measured)
+  (0) (FLOPs) (on the host) (the laptop only sends bytes)
+] /st exch def
+/stw CW 5 div def
+0 1 4 { /k exch def /sx LM k stw mul add def
+  k 0 gt { newpath sx STT 6 sub moveto sx STT 44 sub lineto 0.4 setlinewidth stroke } if
+  /sx2 sx k 0 gt { 9 } { 0 } ifelse add def
+  sx2 STT 24 sub moveto
+  k 2 eq { /Symbol 13 F (\273) show } if
+  /HB 18 F st k 4 mul get show
+  /HB 8 F ( ) show st k 4 mul 1 add get show
+  /HB 6.8 F sx2 STT 35 sub moveto st k 4 mul 2 add get show
+  0.4 setgray /H 6.4 F sx2 STT 44 sub moveto st k 4 mul 3 add get show 0 setgray
+} for
+
+% ---------- footer ----------
+(Page 1 of 2) pgfoot
+/wfR /TI def /wsz 6.8 def /wld 8.4 def /wgray 0.35 def
+(* Among int8, 260,032-parameter, English-language, children's-story models executed by a PostScript interpreter, as of this printing. Ghostscript counts as a printer for the purposes of this footnote. Model: Karpathy's llama2.c stories260K, trained on TinyStories. Not affiliated with or endorsed by Adobe, HP, Artifex, Google, or any AI lab.)
+LM 64 420 wrap
+/wgray 0 def
+pgsave restore
+showpage
+
+%%Page: 2 2
+%%BeginPageSetup
+/pgsave save def
+%%EndPageSetup
+0 setgray 0 setlinecap 0 setlinejoin
+pghead
+(INSIDE THE FILE) 700 kicker
+/HB 25 F LM 674 moveto (What's inside the 595 KB print job) show
+
+% ---------- anatomy bar ----------
+/abh 8 def /aby 638 def
+[ 72807 0.3 (Embedding) (73 KB)  136459 0.55 (Attention) (136 KB)  358707 0.82 (Feed-forward) (359 KB)
+  9582 0.12 (Norms, vocab) (9.6 KB)  17622 0 (Program) (17.6 KB) ] /ab exch def
+/abT 595177 def
+0.4 setgray /H 6.5 F LM aby abh add 5 add moveto (BYTES IN TONER1.PS BY PURPOSE: 595,177 TOTAL, 454 LINES OF PLAIN TEXT) 0.6 tshow 0 setgray
+/abx LM def
+0.4 setlinewidth
+0 4 ab length 1 sub { /k exch def
+  /aw ab k get abT div CW mul def
+  ab k 1 add get setgray abx aby aw abh rectp fill 0 setgray
+  k 9 lt {
+    newpath abx aby moveto 0 -11 rlineto stroke
+    /HB 6.5 F abx 3 add aby 9 sub moveto ab k 2 add get show
+    0.4 setgray /H 6.5 F ( ) show ab k 3 add get show 0 setgray } if
+  /abx abx aw add def } for
+/sl1 RM 17622 abT div CW mul sub 9582 abT div CW mul sub def
+/sl2 RM 17622 abT div CW mul 2 div sub def
+newpath sl1 aby moveto 0 -11 rlineto stroke
+/HB 6.5 F sl1 3 sub aby 9 sub moveto (Norms + vocab) dup sw /t1 exch def
+0.4 setgray /H 6.5 F (  9.6 KB) dup sw t1 add neg 0 rmoveto exch 0 setgray /HB 6.5 F show 0.4 setgray /H 6.5 F show 0 setgray
+newpath sl2 aby abh add moveto 0 5 rlineto stroke
+/HB 6.5 F sl2 3 sub aby abh add 5 add moveto
+(The program: 17.6 KB, about 3%) dup sw neg 0 rmoveto show
+
+% ---------- annotated excerpts ----------
+/csz 6.6 def /cld 7.9 def
+/CBW 278 def /CLX LM CBW add 22 add def /CLW RM CLX sub def
+/rgap 7 def /rnum 0 def
+/xrow { % [lines] (callout)
+  /rcall exch def /rlines exch def
+  /rnum rnum 1 add def
+  /rch rlines cbh def
+  /wfR /TR def /wfB /HB def /wfC /CR def /wsz 8.4 def /wld 10.3 def /wbs 0.92 def /wcs 0.95 def
+  /rb1 ry 7.2 sub def
+  rcall CLX rb1 CLW wmeasure /rlast exch def
+  /rth ry rlast sub 2.5 add def
+  rlines LM ry CBW codeblock
+  rnum 3 string cvs CLX 11 sub rb1 2.8 add numdot
+  rcall CLX rb1 CLW wrap
+  /ry ry rch rth gt { rch } { rth } ifelse sub rgap sub def } bind def
+/xsec { % (label) : section label, advances ry
+  /sly ry 7 sub def
+  LM sly moveto /HB 6.5 F 1.2 tshow
+  0.4 setgray /H 6.5 F ( ) show 0 setgray
+  /ry sly 7 sub def } bind def
+
+/ry aby 23 sub def
+(THE DATA, LINES 1 TO 106) xsec
+[ (1) (%!PS-Adobe-3.0)
+  (7) (/D 64 def /HID 172 def /NL 5 def /NH 8 def /NKV 4 def)
+  () (  /V 512 def /SEQ 512 def /HS 8 def /KVD 32 def)
+  () (  /KVMUL 2 def /NPARAMS 260032 def) ]
+(^The ^model ^card ^is ^one ^line. Line 7 defines width 64, 5~layers, 8~query heads sharing 4 key/value heads and a 512-token vocabulary. Nothing runs yet; names are just defined. Line 1 makes it a print job; lines 2 to 6 are comments for the spooler.)
+xrow
+
+/cextra 30 def
+/cxproc {
+  /dy cyy cld add csz 0.23 mul sub 4 sub def
+  1 setgray 0.6 setlinewidth newpath cx 1.6 add dy moveto cx cw add dy lineto stroke
+  /cch csz 0.6 mul def
+  [ (row 0 bytes) [(92) (a1) (7c) (88)] (minus 128) [(18) (33) (-4) (8)] (\327 0.00241668) [(0.0435) (0.0798) (-0.0097) (0.0193)] ] /dt exch def
+  0 1 2 { /k exch def /dyy dy 8.4 sub k cld mul sub def
+    0.45 setgray /CR csz F cx cgut add dyy moveto dt k 2 mul get show 0 setgray
+    0 1 3 { /m exch def cx cgut add 20 m 9 mul add cch mul add dyy moveto dt k 2 mul 1 add get m get rshow } for
+  } for } def
+[ (16) (/WQ [)
+  (17) ([[0.00241668 0.00436529 0.00353898 0.00237025 ... 0.0012341])
+  (18) ([<92a17c888b708f7c23077585b2b3418c5c1e784b...> <b39d...> ...]]) ]
+(^Weights ^are ^bytes. For each matrix row, export.py takes the largest absolute weight m and stores scale~=~m/127. Each weight is rounded to an integer from -127 to 127, plus 128, and written as one byte of a hex string. Two hex characters per weight: that is most of the file.)
+xrow
+
+(THE PROGRAM, LINES 107 TO 454) xsec
+[ (128) (% o x M mv  ;  M = [scales rows], rows ... offset by 128)
+  (129) (/@@mv@@ { /mM exch def /mx exch def /mo exch def)
+  (130) (  /mS mM 0 get def /mQ mM 1 get def /mn mx length 1 sub def)
+  (131) (  /msx 0 mx { add } forall 128 mul def)
+  (132) (  0 1 mQ length 1 sub { /mi exch def /mrow mQ mi get def)
+  (133) (    0 0 1 mn { dup mrow exch get exch mx exch get mul add } for)
+  (134) (    msx sub mS mi get mul mo mi 3 -1 roll put } for)
+  (135) (} bind def) ]
+(^mv ^does ^the ^heavy ^lifting. Matrix times vector: about 259,000 multiply-adds per token run through these eight lines. `get on a string returns a byte as an integer. Rather than subtract 128 from every byte, mv takes the raw dot product, subtracts `msx \(128 times the sum of the input\), then applies the row's scale.)
+xrow
+
+[ (138) (/rope { /rn exch def /rv exch def)
+  (139) (  0 2 rn 1 sub { /ri exch def)
+  (140) (    /hd ri HS mod def)
+  (141) (    pos 10000 hd HS div exp div @@57.29577951@@ mul /ang exch def)
+  (142) (    /fcr ang @@cos@@ def /fci ang @@sin@@ def) ]
+(^RoPE, ^in ^degrees. Rotary embeddings turn query/key pairs by `pos~/~10000^\(hd/8\) radians, but PostScript's `sin and `cos take degrees. Hence 57.29577951 \(180/pi\). Without it, every position would get the wrong rotation.)
+xrow
+
+[ (117) (SEED @@srand@@ 4 { rand pop } repeat)
+  (203) (/r @@rand@@ 2147483647 div ssum mul def /cum 0 def)
+  () (  /pick V 1 sub def)
+  (204) (0 1 V 1 sub { /j exch def /cum cum logits j get add def)
+  () (  cum r gt { /pick j def exit } if } for) ]
+(^Sampling ^with ^rand. The logits become a softmax at temperature 0.8. PostScript's built-in `rand picks a point along the total, and the loop walks the running sum until it passes it. Line 117 skips four tiny first draws. Seed 42: same interpreter, same story.)
+xrow
+
+[ (256) (% ... typesetting: the same print job lays out the page ...)
+  (367) (fs /Times-Roman F ...)
+  (448) (9 /Helvetica-Bold F 72 79 moveto \(Host compute: ...\) show)
+  (452) (@@showpage@@) ]
+(^Then, ^and ^only ^then, ^toner. After 200 tokens \(or an end-of-story token\), the same job word-wraps the story in Times-Roman, draws the run card and calls `showpage. Until then, the printer was just a computer.)
+xrow
+/rowsend ry def
+
+% ---------- print it yourself ----------
+/BB 84 def
+/STH 20 def
+/PBX BB STH add 8 add def     % print box bottom
+/PBH2 96 def /PBY2 PBX PBH2 add def
+0 setgray 1 setlinewidth LM PBX CW PBH2 rectp stroke
+LM PBY2 14 sub CW 14 rectp fill
+1 setgray /HB 7 F LM 10 add PBY2 9.6 sub moveto (PRINT IT YOURSELF) 1 tshow
+/H 6.6 F RM 10 sub PBY2 9.6 sub moveto (BRING YOUR OWN PRINTER) 0.8 rtshow 0 setgray
+/CB 10.5 F LM 12 add PBY2 33 sub moveto (nc <printer-ip> 9100 < toner1.ps) show
+0.4 setgray /H 6.6 F RM 12 sub PBY2 27.5 sub moveto (TONER-1 Pro: toner1_15M.ps, 15M parameters, 31.6 MB.) rshow
+RM 12 sub PBY2 36 sub moveto (Same command. Much slower.) rshow 0 setgray
+LM 12 add RM 12 sub PBY2 44 sub 0.4 hline
+[ (^Needs ^real ^PostScript. A PostScript interpreter, Level 2 or later, is required. PCL- or GDI-only printers may print the file as raw text.)
+  (^Expect ^minutes. An estimated 0.3 to 5 tok/s is roughly 1 to 10 minutes per 200-token page. It is thinking.)
+  (^Mind ^the ^limits. Long jobs can hit the job timeout or the VM limit. Ghostscript uses about 3.5~MB of VM.)
+  (^Ask ^first. Only use printers you own or have permission to use. The queue behind you has feelings.) ] /notes exch def
+/nw2 CW 24 sub 16 sub 2 div def
+0 1 3 { /k exch def
+  /nx2 LM 12 add k 2 mod nw2 16 add mul add def
+  /ny2 PBY2 55 sub k 2 idiv 22 mul sub def
+  newpath nx2 ny2 2.8 add 1.8 0 360 arc fill
+  /wfR /TR def /wfB /HB def /wsz 8.2 def /wld 9.9 def /wbs 0.92 def
+  notes k get nx2 7 add ny2 nw2 7 sub wrap } for
+
+% ---------- status ----------
+gsave 0.925 setgray LM BB CW STH rectp fill grestore
+/HB 7 F LM 10 add BB 7.3 add moveto (STATUS) 1 tshow
+/box6 { % x y checked
+  /bck exch def /byy exch def /bxx exch def
+  0.7 setlinewidth bxx byy 6.4 6.4 rectp gsave 1 setgray fill grestore stroke
+  bck { 1.1 setlinewidth newpath bxx 1.3 add byy 3.2 add moveto bxx 2.8 add byy 1.4 add lineto bxx 5.4 add byy 5.6 add lineto stroke } if
+  0.7 setlinewidth } bind def
+/TR 8 F (Verified in Ghostscript 10.07: 200 tokens, about 55 tok/s, about 3.5 MB of VM) /st1 exch def
+/TB 8 F (Not yet run on a physical printer) /st2 exch def
+/st2x RM 10 sub st2 sw sub def
+LM 62 add BB 6.6 add true box6
+/TR 8 F LM 73 add BB 7.3 add moveto st1 show
+st2x 11 sub BB 6.6 add false box6
+/TB 8 F st2x BB 7.3 add moveto st2 show
+
+% ---------- footer ----------
+(Page 2 of 2) pgfoot
+/wfR /TI def /wsz 6.8 def /wld 8.4 def /wgray 0.35 def /wfC /CR def
+(Excerpts are verbatim from toner1.ps; gray `... marks trims, and long lines are re-wrapped or dedented. Prior art: int-llm-postscript \(Aug 2026\) ran a 14K-parameter microGPT in Ghostscript only; PSChess played chess on real printers. TONER-1 is built to run on an actual printer; that run is pending. Not affiliated with or endorsed by Adobe, HP, Artifex, Google, or any AI lab.)
+LM 64 452 wrap
+/wgray 0 def
+pgsave restore
+showpage
+%%Trailer
+end
+%%EOF

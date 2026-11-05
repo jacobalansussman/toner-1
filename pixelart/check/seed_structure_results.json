@@ -1,0 +1,12 @@
+{
+ "consecutive": {
+  "npy": "pixelart/check/seed_structure_consecutive_n32.npy",
+  "mean_pairwise_hamming_within_class": 65.27889784946237,
+  "judge": "seed_structure_consecutive_n32.npy: judge accuracy 0.767 (real val ceiling 0.814) ink 0.227\n  cat=0.50 dog=0.69 bird=0.44 fish=0.81 duck=0.50 rabbit=0.56 frog=0.47 teddy-bear=0.91 sun=0.84 tree=0.94 flower=0.84 house=0.94 car=0.94 apple=0.91 cake=0.88 soccer ball=0.91 light bulb=0.78 calculator=0.97"
+ },
+ "random": {
+  "npy": "pixelart/check/seed_structure_random_n32.npy",
+  "mean_pairwise_hamming_within_class": 66.23465501792116,
+  "judge": "seed_structure_random_n32.npy: judge accuracy 0.773 (real val ceiling 0.814) ink 0.223\n  cat=0.56 dog=0.59 bird=0.47 fish=0.81 duck=0.66 rabbit=0.72 frog=0.56 teddy-bear=0.75 sun=0.94 tree=0.88 flower=0.84 house=0.88 car=0.94 apple=0.88 cake=0.78 soccer ball=0.94 light bulb=0.88 calculator=0.84"
+ }
+}

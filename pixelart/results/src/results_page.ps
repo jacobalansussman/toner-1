@@ -1,0 +1,174 @@
+% ---------------- TONER-1-V blind identification test: results page ----------------
+% Needs DOODLE, the doodle engine (TVgen TVdraw TVms TVtokprint), TVH (house.ps), /BORDER
+% (eval_key/blind_order.ps: class index and seed for cells 1..36) and results_data.ps (/BGUESS /BCONF
+% /BRECOG /BEXP). Regenerates the blind grid's 36 doodles from the same seeds, checks each against the
+% blind grid's patch tokens (/BEXP), and typesets each true class next to the evaluator's guess.
+% The evaluator is an AI model that was not told the labels; this is not a human study.
+TVH begin
+/BR 300 dict def BR begin
+/setpagedevice where { pop mark { 1 dict dup /PageSize [612 792] put setpagedevice } stopped cleartomark } if
+/NCELL BORDER length 2 idiv def
+/CLN DOODLE /CLASSES get def
+/NCLS CLN length def
+/NANIMAL 8 def                       % CLASSES 0..7 are animals (counting the teddy bear); 8..17 are objects
+
+% ---- geometry: 6 x 6 grid on the left, results column on the right ----
+/S 48 def /PX 57 def /RP 81 def /GT0 612 def /GX0 54 def /GXR GX0 5 PX mul add S add def
+/RL GXR 24 add def /RR 558 def
+/cellxy { % k (0-based) -> x y   (lower-left corner of the doodle)
+  /ck exch def GX0 ck 6 mod PX mul add  GT0 ck 6 idiv RP mul sub 10 sub S sub } bind def
+
+% ---- marks: identified = green tick, missed = red cross (the shapes differ, so mono printers work too) ----
+/tick { /my exch def /mx exch def
+  gsave 0.06 0.46 0.20 setrgbcolor 1.3 setlinewidth 1 setlinecap 1 setlinejoin
+  newpath mx my 2.9 add moveto mx 2.3 add my 0.5 add lineto mx 6.4 add my 6.2 add lineto stroke grestore } bind def
+/cross { /my exch def /mx exch def
+  gsave 0.80 0.12 0.20 setrgbcolor 1.3 setlinewidth 1 setlinecap
+  newpath mx 0.7 add my 0.7 add moveto mx 5.5 add my 5.5 add lineto
+  mx 0.7 add my 5.5 add moveto mx 5.5 add my 0.7 add lineto stroke grestore } bind def
+/sqf { /my exch def /mx exch def gsave 0 setgray newpath mx my moveto 5.4 0 rlineto 0 5.4 rlineto -5.4 0 rlineto closepath fill grestore } bind def
+/sqo { /my exch def /mx exch def gsave 0 setgray 0.6 setlinewidth newpath mx 0.3 add my 0.3 add moveto 4.8 0 rlineto 0 4.8 rlineto -4.8 0 rlineto closepath stroke grestore } bind def
+
+% ---- generate, draw and check the 36 doodles; each inside save/restore, only (match? ms) survive ----
+(TONER-1-V blind test results | ) print NCELL =only ( doodles | T ) print DTEMP =only (\n) print flush
+/OK NCELL array def
+/CORR NCLS array def 0 1 NCLS 1 sub { CORR exch 0 put } for
+/totms 0 def /nmatch 0 def /ncorr 0 def
+0 1 NCELL 1 sub { /k exch def
+  /tc BORDER k 2 mul get def /sd BORDER k 2 mul 1 add get def /gc BGUESS k get def
+  OK k tc gc eq put
+  OK k get { /ncorr ncorr 1 add def CORR tc CORR tc get 1 add put } if
+  k cellxy /cy exch def /cx exch def
+  cx 0.2 sub cy 0.2 sub S 0.4 add S 0.4 add 0.4 0.78 rs
+  save
+    tc sd TVgen
+    cx cy S 0 0 0 TVdraw
+    (D ) print k 1 add =only ( ) print tc =only ( ) print sd =only ( ) print TVtokprint (\n) print flush
+    true 0 1 63 { /vi exch def DENG /PV get vi get BEXP k get vi get eq and } for
+    TVms
+  3 -1 roll restore
+  /totms exch totms add def
+  { /nmatch nmatch 1 add def } if
+  % number, mark, true class, guess
+  0 setgray 7 fHB cx cy S add 3.5 add moveto k 1 add 4 string cvs show
+  OK k get { cx S add 6.6 sub cy S add 3.2 add tick } { cx S add 6.2 sub cy S add 3.2 add cross } ifelse
+  0 setgray 6.6 fHB cx cy 8.5 sub moveto CLN tc get show
+  6.2 fH OK k get { 0.45 setgray } { 0 setgray } ifelse cx cy 16.5 sub moveto (AI: ) CLN gc get cat show
+} for
+/tsec totms 1000 div def
+/tps tsec 0 gt { NCELL 64 mul tsec div } { 0 } ifelse def
+
+% ---- statistics ----
+/acc ncorr NCELL div def
+/zz 1.959964 def /nn NCELL def                      % Wilson 95% interval
+/wden 1 zz zz mul nn div add def
+/wmid acc zz zz mul 2 nn mul div add wden div def
+/whw zz acc 1 acc sub mul nn div zz zz mul 4 nn nn mul mul div add sqrt mul wden div def
+/wlo wmid whw sub def /whi wmid whw add def
+/nanic 0 def /nobjc 0 def
+0 1 NCLS 1 sub { /ci exch def ci NANIMAL lt { /nanic nanic CORR ci get add def } { /nobjc nobjc CORR ci get add def } ifelse } for
+/nrec 0 def /nrecc 0 def
+0 1 NCELL 1 sub { /k exch def BRECOG k get { /nrec nrec 1 add def OK k get { /nrecc nrecc 1 add def } if } if } for
+/pct { 100 mul 0 fmt (%) cat } bind def              % fraction -> (67%)
+/pct1 { 100 mul 1 fmt (%) cat } bind def             % fraction -> (66.7%)
+(---\n) print NCELL =only ( doodles, ) print NCELL 64 mul =only ( patch tokens in ) print tsec =only ( s = ) print
+  tps =only ( tok/s, ) print tsec NCELL div =only ( s per doodle\n) print
+(match blind grid: ) print nmatch =only ( of ) print NCELL =only (\n) print
+(RESULT correct ) print ncorr =only ( of ) print NCELL =only ( acc ) print acc =only ( wilson ) print wlo =only ( ) print whi =only
+  ( animals ) print nanic =only ( objects ) print nobjc =only ( recog ) print nrecc =only (/) print nrec =only
+  ( notrecog ) print ncorr nrecc sub =only (/) print NCELL nrec sub =only (\nPERCLASS) print
+  0 1 NCLS 1 sub { ( ) print CORR exch get =only } for (\n) print flush
+
+% ---- the classes it missed on both doodles, as a sentence ----
+/plural { dup (fish) eq { } { dup (teddy-bear) eq { pop (teddy bears) } { (s) cat } ifelse } ifelse } bind def
+/cap1 { dup length string copy dup 0 get dup 97 ge exch 122 le and { dup 0 2 copy get 32 sub put } if } bind def
+/ZL [ 0 1 NCLS 1 sub { /ci exch def CORR ci get 0 eq { ci } if } for ] def
+/zsent () def
+ZL length 0 gt {
+  0 1 ZL length 1 sub { /zi exch def
+    /zsent zsent zi 0 gt { zi ZL length 1 sub eq { ( and ) } { (, ) } ifelse cat } if CLN ZL zi get get plural cat def } for
+  /zsent zsent cap1 ( went 0 for ) cat ZL length 2 mul 4 string cvs cat (.) cat def
+} if
+
+% ---- page furniture and headline ----
+(TONER-1-V BLIND TEST) header
+0 setgray 26 fHB 54 688 moveto (TONER-1-V: blind identification test) show
+12.5 fTI 0.15 setgray 54 668 moveto
+  ncorr 4 string cvs ( of ) cat NCELL 4 string cvs cat ( named correctly. Chance would get ) cat
+  NCELL NCLS div round cvi 4 string cvs cat (. ) cat zsent cat show
+54 558 652 10 fl-begin 0.25 setgray 7.8 fH
+(The blind grid's 36 doodles, regenerated by this print job from the same seeds and drawn in black as the evaluator saw them, with each true class and the evaluator's guess.)
+  fseg 7.8 fHB (Identified blind by an AI model that was not told the labels; not a human study.) fseg
+
+% ---- left: the grid ----
+54 GXR 626 (FIGURE 1   THE 36 DOODLES, WITH ANSWERS) sechead
+6.6 fH 0 setgray
+/lgm (missed) def /lgi (identified) def
+/lgx GXR lgm stringwidth pop sub def lgx 627 moveto lgm show
+lgx 9 sub 625.6 cross
+/lgx lgx 9 sub 10 sub lgi stringwidth pop sub def 0 setgray lgx 627 moveto lgi show
+lgx 9.4 sub 625.6 tick
+
+% ---- right: results ----
+RL RR 626 (RESULTS) sechead
+0 setgray 30 fHB RL 589 moveto ncorr 4 string cvs ( of ) cat NCELL 4 string cvs cat show
+8.4 fH RL 575 moveto (doodles named correctly: ) acc pct1 cat show
+/curY 557 def
+/srow { /srv exch def /srl exch def
+  0.3 setgray 6.2 fHB RL curY moveto srl 0.6 tsh
+  0 setgray 7.6 fH RR curY moveto srv rsh
+  RL RR curY 4.6 sub 0.35 0.6 hl /curY curY 13.6 sub def } bind def
+(CHANCE) (1 in ) NCLS 4 string cvs cat ( = ) cat 1 NCLS div pct1 cat ( \() cat NCELL NCLS div round cvi 4 string cvs cat ( of ) cat NCELL 4 string cvs cat (\)) cat srow
+(95% INTERVAL) wlo pct (\261) cat whi pct cat ( \(Wilson\)) cat srow
+(OBJECTS \(10 CLASSES\)) nobjc 4 string cvs ( of ) cat NCLS NANIMAL sub 2 mul 4 string cvs cat ( \() cat nobjc NCLS NANIMAL sub 2 mul div pct cat (\)) cat srow
+(ANIMALS \(8 CLASSES\)) nanic 4 string cvs ( of ) cat NANIMAL 2 mul 4 string cvs cat ( \() cat nanic NANIMAL 2 mul div pct cat (\)) cat srow
+(AI: RECOGNIZABLE) nrecc 4 string cvs ( of ) cat nrec 4 string cvs cat ( right) cat srow
+(AI: NOT RECOGNIZABLE) ncorr nrecc sub 4 string cvs ( of ) cat NCELL nrec sub 4 string cvs cat ( right) cat srow
+
+% per class, best first: two squares per class, filled = identified; then what the misses were called (cell order)
+/curY curY 11 sub def
+RL RR curY (PER CLASS) sechead
+6.2 fH 0 setgray
+/lgx RR (missed) stringwidth pop sub def lgx curY 0.6 add moveto (missed) show
+lgx 8.4 sub curY 0.2 add sqo
+/lgx lgx 8.4 sub 6 sub (identified) stringwidth pop sub def 0 setgray lgx curY 0.6 add moveto (identified) show
+lgx 8.4 sub curY 0.2 add sqf
+/curY curY 18 sub def
+2 -1 0 { /sc exch def
+  0 1 NCLS 1 sub { /ci exch def CORR ci get sc eq {
+    0 setgray 7.2 fH RL curY moveto CLN ci get show
+    /sqx RL 52 add def /miss () def
+    sc { sqx curY 0.2 sub sqf /sqx sqx 7.6 add def } repeat
+    2 sc sub { sqx curY 0.2 sub sqo /sqx sqx 7.6 add def } repeat
+    0 1 NCELL 1 sub { /k exch def BORDER k 2 mul get ci eq OK k get not and {
+      /miss miss length 0 eq { (as ) } { miss (, ) cat } ifelse CLN BGUESS k get get cat def } if } for
+    0.35 setgray 6.4 fH RL 74 add curY moveto miss show
+    /curY curY 12.2 sub def
+  } if } for
+} for
+
+% this page
+/curY curY 7 sub def
+RL RR curY (THIS PAGE) sechead
+RL RR curY 17 sub 9 fl-begin 0 setgray 7 fH
+(Every doodle here was regenerated inside this print job from the blind grid's seeds: ) NCELL 64 mul commas cat
+  ( patch tokens in ) cat tsec 1 fmt cat ( s, ) cat tps 0 fmt cat ( tok/s. ) cat fseg
+nmatch NCELL eq { 7 fHB } { 0.80 0.12 0.20 setrgbcolor 7 fHB } ifelse
+nmatch 4 string cvs ( of ) cat NCELL 4 string cvs cat ( match the blind grid token for token.) cat fseg
+0 setgray 7 fH (Interpreter: ) IDENT cat (.) cat fseg
+
+% ---- footnote ----
+54 558 123 0.6 0 hl
+54 558 113 8.4 fl-begin 0 setgray 6.7 fHB
+(Identified blind by an AI model that was not told the labels; not a human study.) fseg
+6.7 fH 0.2 setgray
+(The evaluator reports reading only the unlabeled blind grid page, which lists the 18 classes and says there are two of each;) fseg
+(it did not force the pairs \(cake, car, duck and fish got three guesses each\). Scoring is an exact match against the answer key;) fseg
+(\252AI:\240recognizable\272 is the evaluator's own flag. 36 doodles is a small sample, and with two per class the per-class results are anecdotes.) fseg
+(For scale, the CNN judge used in training scores 77.8% on 288 Ghostscript doodles at the same temperature and 81.4% on real 16\240\201\24016 drawings.) fseg
+
+(Generated inside this print job. Drawings learned from the Quick, Draw! dataset \(Google, CC BY 4.0\).) (Page 1 of 1) footer
+end end
+showpage
+vmstatus /vmmax exch def /vmused exch def /vmlev exch def
+(VM: ) print vmused =only ( bytes used of ) print vmmax =only ( allocated \(save level ) print vmlev =only (\)\n) print flush

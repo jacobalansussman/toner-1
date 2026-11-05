@@ -1,0 +1,128 @@
+% ---------------- TONER-1-V doodle engine (16x16 pixel art, same forward pass as the story) ----------------
+% Needs /DOODLE from doodle_weights.ps. Adds four names to the current dictionary (userdict):
+%   /DENG    dictionary: engine2.ps's forward pass, the doodle's own activation buffers and KV cache, the
+%            masked sampler, and the bitmap decoder. Every scratch name lives in DENG, never in userdict.
+%   /DTEMP   doodle sampling temperature (default 0.9; gs -dDTEMP=... overrides).
+%   /TVgen   cls seed TVgen -        sample one doodle of class index cls (0..17) from rand seeded with seed
+%   /TVdraw  x y size r g b TVdraw - draw the last doodle with imagemask in an RGB color, size x size points
+% and TVcolor (cls -> r g b), TVms (-> usertime ms of the last TVgen), TVprint (ASCII art to stdout).
+% While TONER-1-V runs, the dictionary stack is  ... userdict DOODLE DENG , so engine2's procedures
+% (copied verbatim below) find the doodle's weights, sizes and buffers first, and the story model's
+% names in userdict are never read or written. Level 2 operators or lower only.
+/=only where { pop } { /=only { dup type /stringtype ne { 64 string cvs } if print } bind def } ifelse
+/DTEMP where { pop } { /DTEMP 0.9 def } ifelse
+/DENG 200 dict def
+DOODLE begin DENG begin
+
+% ======== begin: verbatim copy of engine2.ps, from "/E 2.718281828 def" to the end of /forward ========
+%%ENGINE2-FORWARD%%
+% ======== end of the verbatim copy. The buffers above were created with the doodle's D, HID, V, SEQ, NL. ========
+
+% -> token. engine2's /sample restricted to the 16 patch tokens PATCH0 .. PATCH0+15 (the other 20
+% logits are ignored, i.e. masked to probability 0). Same softmax-with-temperature, same single rand draw.
+/dsample {
+  /dlo PATCH0 def /dhi PATCH0 NPATCHV add 1 sub def
+  /dbv -1e30 def /dbest dlo def
+  dlo 1 dhi { /dj exch def logits dj get dup dbv gt { /dbv exch def /dbest dj def } { pop } ifelse } for
+  DTEMP 0 le { dbest } {
+    /dsum 0 def
+    dlo 1 dhi { /dj exch def logits dj get dbv sub DTEMP div dup -80 lt { pop -80 } if E exch exp
+      dup dsum add /dsum exch def logits dj 3 -1 roll put } for
+    /dr rand 2147483647 div dsum mul def /dcum 0 def /dpick dbest def
+    dlo 1 dhi { /dj exch def /dcum dcum logits dj get add def dcum dr gt { /dpick dj def exit } if } for
+    dpick
+  } ifelse
+} bind def
+
+/PV NPATCH array def          % the 64 sampled patch values 0..15, raster order over the 8x8 grid
+/BITS IMG IMG mul 8 idiv string def   % 16x16 one-bit bitmap, 2 bytes per row, top row first, 1 = ink
+/UPS 2048 string def          % the same bitmap repeated 8x8 (128x128 bits), so every doodle pixel is a block
+/dms 0 def
+
+% cls seed dgen -   BOS, CLASS0+cls, then 64 sampled patches; 65 forward passes
+/dgen { /dseed exch def /dcls exch def
+  dseed srand 4 { rand pop } repeat       % as engine2.ps: the first draws after a small seed are tiny
+  usertime /dt0 exch def
+  BOS 0 forward
+  /dtok CLASS0 dcls add def
+  1 1 NPATCH { /dpos exch def
+    dtok dpos forward
+    /dtok dsample def
+    PV dpos 1 sub dtok PATCH0 sub put
+  } for
+  usertime dt0 sub /dms exch def
+  dbits
+} bind def
+
+% patches -> BITS.  v = 8*TL + 4*TR + 2*BL + 1*BR; patch i covers rows 2(i/8), 2(i/8)+1 and
+% columns 2(i mod 8), 2(i mod 8)+1; bits are MSB first within each byte.
+/dbits {
+  0 1 BITS length 1 sub { BITS exch 0 put } for
+  0 1 NPATCH 1 sub { /dq exch def /dv PV dq get def
+    /dgc dq GRID mod def
+    /dsh 6 dgc 4 mod 2 mul sub def
+    /dbi dq GRID idiv 4 mul dgc 4 idiv add def
+    BITS dbi BITS dbi get dv -2 bitshift dsh bitshift or put
+    BITS dbi 2 add BITS dbi 2 add get dv 3 and dsh bitshift or put
+  } for
+} bind def
+
+% row col dpix -> 0|1
+/dpix { exch 2 mul 1 index 8 idiv add BITS exch get exch 8 mod 7 exch sub neg bitshift 1 and } bind def
+
+% BITS -> UPS: nearest-neighbour 8x (one byte of 8 equal bits per doodle pixel, each row 8 times).
+% A one-bit block image prints identically to the 16x16 mask, and PDF viewers that smooth
+% upscaled images cannot blur its pixel edges.
+/dups {
+  0 1 15 { /dry exch def
+    0 1 15 { /dcx exch def
+      dry dcx dpix 1 eq { 255 } { 0 } ifelse /db8 exch def
+      0 1 7 { dry 8 mul add 16 mul dcx add UPS exch db8 put } for
+    } for
+  } for
+} bind def
+
+% x y size r g b ddraw -   imagemask in the current color; pixel (0,0) is the top-left corner
+/ddraw { /dcb exch def /dcg exch def /dcr exch def /dsz exch def /ddy exch def /ddx exch def
+  dups
+  gsave ddx ddy translate dsz dsz scale dcr dcg dcb setrgbcolor
+    128 128 true [128 0 0 -128 0 128] { UPS } imagemask
+  grestore
+} bind def
+
+% ASCII art of the last doodle on stdout ('#' = ink), plus its 64 patch values
+/dprint {
+  0 1 15 { /dry exch def ( ) print 0 1 15 { dry exch dpix 1 eq { (#) } { (.) } ifelse print } for (\n) print } for
+} bind def
+/dtokprint { 0 1 NPATCH 1 sub { PV exch get =only ( ) print } for } bind def
+
+% class colors (RGB), CLASSES order
+/DCOL [
+  [0.86 0.45 0.10]  % cat         ginger
+  [0.50 0.32 0.18]  % dog         brown
+  [0.80 0.12 0.20]  % bird        cardinal red
+  [0.05 0.40 0.80]  % fish        blue
+  [0.00 0.52 0.52]  % duck        mallard teal
+  [0.55 0.42 0.60]  % rabbit      lilac grey
+  [0.38 0.62 0.08]  % frog        lime green
+  [0.72 0.46 0.16]  % teddy-bear  honey
+  [0.96 0.58 0.00]  % sun         yellow-orange
+  [0.06 0.46 0.20]  % tree        forest green
+  [0.78 0.14 0.58]  % flower      magenta
+  [0.62 0.24 0.14]  % house       brick
+  [0.15 0.25 0.70]  % car         cobalt
+  [0.84 0.08 0.12]  % apple       red
+  [0.92 0.40 0.60]  % cake        frosting pink
+  [0.12 0.12 0.12]  % soccer ball black
+  [0.82 0.62 0.00]  % light bulb  amber
+  [0.32 0.38 0.46]  % calculator  slate
+] def
+end end
+
+/TVgen { DOODLE begin DENG begin dgen end end } bind def
+/TVdraw { DOODLE begin DENG begin ddraw end end } bind def
+/TVcolor { DENG /DCOL get exch get aload pop } bind def
+/TVms { DENG /dms get } bind def
+/TVprint { DOODLE begin DENG begin dprint end end } bind def
+/TVtokprint { DOODLE begin DENG begin dtokprint end end } bind def
+% ---------------- end of TONER-1-V doodle engine ----------------

@@ -1,0 +1,26 @@
+# downloaded checkpoints (tools/fetch_checkpoints.sh)
+checkpoints/*.bin
+checkpoints/*.part
+# build outputs (tools/build.sh, tools/make_pages.sh, pixelart/results/build_results.sh)
+build/
+# downloaded and processed Quick, Draw! data (pixelart/src/fetch_data.py, preprocess.py)
+data/
+pixelart/data/
+# pipeline outputs; the shipped export metadata is kept
+pixelart/out/*
+!pixelart/out/doodle_meta.json
+!pixelart/out/reference_logits.json
+pixelart/ckpt/ps_check/
+pixelart/check/*.ps
+pixelart/check/*.npy
+pixelart/check/*.out
+# PDFs and PNGs from local runs (the release PDFs in docs/ are kept)
+*.pdf
+!docs/**/*.pdf
+/*.png
+# environments and OS files
+.venv/
+venv/
+__pycache__/
+*.pyc
+.DS_Store

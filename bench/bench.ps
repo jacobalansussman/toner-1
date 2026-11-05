@@ -1,0 +1,50 @@
+%!PS
+% Benchmark matvec idioms: N rows x D cols, repeated R times
+/D 64 def /N 512 def /R 400 def
+/x D array def 0 1 D 1 sub { x exch dup 0.01 mul 0.5 sub put } for
+% A: weights as array of arrays of reals
+/WA N array def
+0 1 N 1 sub { /i exch def WA i D array dup 0 1 D 1 sub { 1 index exch dup i add 7 mod 0.1 mul 0.3 sub put } for pop put } for
+% B: weights as one int8 string (row-major), per-row scale via LUT of 256 reals
+/WS N D mul string def
+0 1 N D mul 1 sub { WS exch dup 37 mul 255 and put } for
+/LUT 256 array def 0 1 255 { LUT exch dup dup 127 gt {256 sub} if 0.01 mul put } for
+/out N array def
+
+% Idiom 1: naive indexed for loop
+/mv1 { 0 1 N 1 sub { /i exch def /row WA i get def
+   0 0 1 D 1 sub { dup row exch get exch x exch get mul add } for
+   out i 3 -1 roll put } for } bind def
+
+% Idiom 2: forall over row with index on stack
+/mv2 { 0 1 N 1 sub { /i exch def
+   0 0 WA i get { x 2 index get mul 3 -1 roll add exch 1 add } forall pop
+   out i 3 -1 roll put } for } bind def
+
+% Idiom 3: aload both, then multiply-accumulate on stack (x pushed reversed between)
+% push row values, then for each x (reverse order) mul and roll product down
+/xr D array def 0 1 D 1 sub { xr exch dup D 1 sub exch sub x exch get put } for
+/mv3 { 0 1 N 1 sub { /i exch def
+   WA i get aload pop      % r0..r63
+   xr { mul D 1 roll } forall  % products, rotated
+   D 1 sub { add } repeat
+   out i 3 -1 roll put } for } bind def
+
+% Idiom 4: int8 string + LUT
+/mv4 { 0 1 N 1 sub { /i exch def /base i D mul def
+   0 0 1 D 1 sub { dup base add WS exch get LUT exch get exch x exch get mul add } for
+   out i 3 -1 roll put } for } bind def
+
+% Idiom 5: int8 string forall with index on stack + LUT
+/mv5 { 0 1 N 1 sub { /i exch def
+   0 0 WS i D mul D getinterval { LUT exch get x 2 index get mul 3 -1 roll add exch 1 add } forall pop
+   out i 3 -1 roll put } for } bind def
+
+/T { /p exch def usertime R { p } repeat usertime exch sub
+     /ms exch def /macs N D mul R mul def
+     (  ms=) print ms =only (  MAC/s=) print macs ms 1000 div div cvi = } def
+(mv1 naive for:) print {mv1} T
+(mv2 forall:) print {mv2} T
+(mv3 aload/roll:) print {mv3} T
+(mv4 int8 str+LUT for:) print {mv4} T
+(mv5 int8 str+LUT forall:) print {mv5} T

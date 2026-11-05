@@ -1,0 +1,347 @@
+% ---------------- TONER-1 inference engine (llama2.c forward pass in PostScript) ----------------
+% =only (print a value, no newline) is a Ghostscript convenience, not a PLRM operator: define it if missing.
+/=only where { pop } { /=only { dup type /stringtype ne { 64 string cvs } if print } bind def } ifelse
+% Run parameters: read only if not already defined, so  gs -dSEED=7 -dTEMP=0.9 ...  overrides them.
+/STEPS where { pop } { /STEPS 200 def } ifelse
+/TEMP where { pop } { /TEMP 0.8 def } ifelse
+/SEED where { pop } { /SEED 42 def } ifelse
+/PAGE where { pop } { /PAGE true def } ifelse
+% rand is a seeded LCG (Park-Miller in Ghostscript): the first draws after a small seed are tiny,
+% which would bias the first sampled token toward the start of the vocab, so discard a few.
+SEED srand 4 { rand pop } repeat
+/E 2.718281828 def
+
+/zeros { /zn exch def zn array 0 1 zn 1 sub { 1 index exch 0.0 put } for } bind def
+
+% o x w rmsnorm
+/rmsnorm { /rw exch def /rx exch def /ro exch def
+  0 rx { dup mul add } forall rx length div 1e-5 add sqrt 1 exch div /rs exch def
+  0 1 rx length 1 sub { /ri exch def ro ri rx ri get rs mul rw ri get mul put } for
+} bind def
+
+% o x M mv  ;  M = [scales rows], rows are int8 strings offset by 128
+/mv { /mM exch def /mx exch def /mo exch def
+  /mS mM 0 get def /mQ mM 1 get def /mn mx length 1 sub def
+  /msx 0 mx { add } forall 128 mul def
+  0 1 mQ length 1 sub { /mi exch def /mrow mQ mi get def
+    0 0 1 mn { dup mrow exch get exch mx exch get mul add } for
+    msx sub mS mi get mul mo mi 3 -1 roll put } for
+} bind def
+
+% vec n rope   (uses pos; PostScript trig takes DEGREES)
+/rope { /rn exch def /rv exch def
+  0 2 rn 1 sub { /ri exch def
+    /hd ri HS mod def
+    pos 10000 hd HS div exp div 57.29577951 mul /ang exch def
+    /fcr ang cos def /fci ang sin def
+    /v0 rv ri get def /v1 rv ri 1 add get def
+    rv ri v0 fcr mul v1 fci mul sub put
+    rv ri 1 add v0 fci mul v1 fcr mul add put } for
+} bind def
+
+/x D zeros def /xb D zeros def /xb2 D zeros def /q D zeros def
+/hb HID zeros def /hb2 HID zeros def /logits V zeros def /att SEQ zeros def
+/KC [ NL { SEQ array } repeat ] def /VC [ NL { SEQ array } repeat ] def
+/isq 1 HS sqrt div def
+
+/attention {
+  /kl KC l get def /vl VC l get def
+  0 1 NH 1 sub { /h exch def /qo h HS mul def /ko h KVMUL idiv HS mul def
+    /amx -1e30 def
+    0 1 pos { /t exch def /kt kl t get def
+      0 0 1 HS 1 sub { /j exch def q qo j add get kt ko j add get mul add } for
+      isq mul dup att t 3 -1 roll put dup amx gt { /amx exch def } { pop } ifelse } for
+    /ssum 0 def
+    0 1 pos { /t exch def att t get amx sub dup -80 lt { pop -80 } if E exch exp
+      dup ssum add /ssum exch def att t 3 -1 roll put } for
+    0 1 HS 1 sub { /j exch def
+      0 0 1 pos { /t exch def att t get vl t get ko j add get mul add } for
+      ssum div xb qo j add 3 -1 roll put } for
+  } for
+} bind def
+
+% token pos forward -> logits filled
+/forward { /pos exch def /tok exch def
+  /es EMB 0 get tok get def /er EMB 1 get tok get def
+  0 1 D 1 sub { /j exch def x j er j get 128 sub es mul put } for
+  0 1 NL 1 sub { /l exch def
+    xb x RMSATT l get rmsnorm
+    q xb WQ l get mv
+    /k KVD zeros def /v KVD zeros def
+    k xb WK l get mv  v xb WV l get mv
+    q D rope  k KVD rope
+    KC l get pos k put  VC l get pos v put
+    attention
+    xb2 xb WO l get mv
+    0 1 D 1 sub { /j exch def x j x j get xb2 j get add put } for
+    xb x RMSFFN l get rmsnorm
+    hb xb W1 l get mv  hb2 xb W3 l get mv
+    0 1 HID 1 sub { /j exch def /hv hb j get def
+      hb j hv 1 E hv neg dup -80 lt { pop -80 } if exp add div hb2 j get mul put } for
+    xb hb W2 l get mv
+    0 1 D 1 sub { /j exch def x j x j get xb j get add put } for
+  } for
+  x x RMSF rmsnorm
+  logits x EMB mv
+} bind def
+
+/sample {
+  TEMP 0 le {
+    /best 0 def /bv -1e30 def
+    0 1 V 1 sub { /j exch def logits j get dup bv gt { /bv exch def /best j def } { pop } ifelse } for best
+  } {
+    /bv -1e30 def logits { dup bv gt { /bv exch def } { pop } ifelse } forall
+    /ssum 0 def
+    0 1 V 1 sub { /j exch def logits j get bv sub TEMP div dup -80 lt { pop -80 } if E exch exp
+      dup ssum add /ssum exch def logits j 3 -1 roll put } for
+    /r rand 2147483647 div ssum mul def /cum 0 def /pick V 1 sub def
+    0 1 V 1 sub { /j exch def /cum cum logits j get add def cum r gt { /pick j def exit } if } for
+    pick
+  } ifelse
+} bind def
+
+% ---- page text buffer: bytes as decoded from the vocab. ASCII passes through (newline = paragraph
+% break); a few UTF-8 punctuation marks map to StandardEncoding glyphs; any other non-ASCII
+% character is left off the page (it still appears in the stdout transcript) and counted in ndrop.
+/TEXT 8000 string def /tlen 0 def /ndrop 0 def /ucp 0 def /urem 0 def
+/UMAP 8 dict def UMAP begin
+  16#2018 96 def 16#2019 39 def 16#201C 170 def 16#201D 186 def
+  16#2013 177 def 16#2014 208 def 16#2026 188 def
+end
+/putb { tlen TEXT length lt { TEXT tlen 3 -1 roll put /tlen tlen 1 add def } { pop } ifelse } bind def
+/append { {
+  /ub exch def
+  ub 128 lt {
+    urem 0 gt { /ndrop ndrop 1 add def /urem 0 def } if
+    ub 10 eq { 10 putb } { ub 32 lt { 32 putb } { ub putb } ifelse } ifelse
+  } {
+    ub 192 ge {
+      urem 0 gt { /ndrop ndrop 1 add def } if
+      ub 224 ge { ub 240 ge { /ucp ub 7 and def /urem 3 def } { /ucp ub 15 and def /urem 2 def } ifelse }
+                { /ucp ub 31 and def /urem 1 def } ifelse
+    } {
+      urem 0 gt {
+        /ucp ucp 64 mul ub 63 and add def /urem urem 1 sub def
+        urem 0 eq { UMAP ucp known { UMAP ucp get putb } { /ndrop ndrop 1 add def } ifelse } if
+      } { /ndrop ndrop 1 add def } ifelse
+    } ifelse
+  } ifelse
+} forall } bind def
+
+(TONER-1 | ) print NPARAMS =only ( params | int8 | PostScript-native inference\n) print flush
+/token 1 def /npos 0 def /ntok 0 def /eos false def /TOKS 1024 array def
+usertime /t0 exch def
+{
+  token npos forward
+  /next sample def
+  next 1 eq { /eos true def exit } if
+  /piece VOCAB next get def
+  token 1 eq piece length 0 gt and { piece 0 get 32 eq { /piece piece 1 piece length 1 sub getinterval def } if } if
+  piece print flush piece append  ntok 1024 lt { TOKS ntok next put } if
+  /token next def /npos npos 1 add def /ntok ntok 1 add def
+  npos STEPS ge { exit } if
+} loop
+usertime t0 sub /ms exch def
+/tps ms 0 gt { ntok ms 1000 div div } { 0 } ifelse def
+(\n---\n) print ntok =only ( tokens in ) print ms 1000 div =only ( s = ) print tps =only ( tok/s) print
+eos { ( [end-of-story token]) } { ( [STEPS limit]) } ifelse print
+ndrop 0 gt { ( [) print ndrop =only ( non-Latin chars not typeset]) print } if (\n) print flush
+
+% ---------------- typesetting: the same print job lays out the page ----------------
+PAGE {
+  % Request US Letter if the device supports it (Level 1 safe: no << >> syntax).
+  /setpagedevice where { pop { 1 dict dup /PageSize [612 792] put setpagedevice } stopped pop } if
+
+  /cat { /c2 exch def /c1 exch def c1 length c2 length add string
+    dup 0 c1 putinterval dup c1 length c2 putinterval } bind def
+  /fmt { /fd exch def /fv exch def /fm 1 def fd { /fm fm 10 mul def } repeat   % num decimals -> string
+    /fi fv fm mul round cvi def fi fm idiv 12 string cvs
+    fd 0 gt { (.) cat /fr fi fm mod 12 string cvs def fd fr length sub { (0) cat } repeat fr cat } if } bind def
+  /commas { 12 string cvs /cs exch def /cr () def /cn cs length def   % int -> "260,032"
+    0 1 cn 1 sub { /ci exch def ci 0 gt cn ci sub 3 mod 0 eq and { /cr cr (,) cat def } if
+      /cr cr cs ci 1 getinterval cat def } for cr } bind def
+  /tshow { exch 0 exch ashow } bind def                       % str tracking tshow
+  /tw { exch dup stringwidth pop exch length 3 -1 roll mul add } bind def   % str trk tw -> width
+  /rshow { dup stringwidth pop neg 0 rmoveto show } bind def
+  /F { findfont exch scalefont setfont } bind def             % size /Font F
+  /hline { /lw exch def /ly exch def lw setlinewidth 72 ly moveto 540 ly lineto stroke } bind def
+  % str x y width leading wrap -> y-of-last-line   (greedy word wrap in the current font)
+  /wrap { /wl exch def /wwid exch def /wy exch def /wx exch def /wsr exch def
+    /wsp ( ) stringwidth pop def /wcx 0 def /wdone false def
+    { wsr ( ) search { exch pop exch /wsr exch def } { /wdone true def } ifelse
+      dup length 0 gt {
+        dup stringwidth pop /wwd exch def
+        wcx 0 gt { wcx wsp add wwd add wwid gt { /wy wy wl sub def /wcx 0 def } { /wcx wcx wsp add def } ifelse } if
+        wx wcx add wy moveto show /wcx wcx wwd add def
+      } { pop } ifelse
+      wdone { exit } if
+    } loop wy } bind def
+
+  /PRO NPARAMS 1000000 gt def
+  /MODELNAME PRO { (stories15M) } { (stories260K) } ifelse def
+  /dot ( \264 ) def
+
+  % ---- smart quotes (typesetting only; the words are untouched) ----
+  /qopen false def
+  0 1 tlen 1 sub { /ci exch def
+    TEXT ci get 34 eq {
+      /pv ci 0 gt { TEXT ci 1 sub get } { 32 } ifelse def
+      /nx ci tlen 1 sub lt { TEXT ci 1 add get } { 32 } ifelse def
+      pv 32 eq pv 10 eq or pv 40 eq or { true } { nx 32 eq nx 10 eq or { false } { qopen not } ifelse } ifelse
+      /qopen exch def TEXT ci qopen { 170 } { 186 } ifelse put
+    } if
+    TEXT ci get 10 eq { /qopen false def } if
+  } for
+
+  % ---- split into words; PARA marks the first word of each paragraph after the first ----
+  /MAXW 3000 def
+  /WORDS MAXW array def /PARA MAXW array def /WW MAXW array def /LS MAXW array def /LIND MAXW array def
+  /NW 0 def /wstart -1 def /pnew false def
+  0 1 tlen { /ci exch def
+    /cb ci tlen lt { TEXT ci get } { 32 } ifelse def
+    cb 32 eq cb 10 eq or {
+      wstart 0 ge NW MAXW lt and {
+        WORDS NW TEXT wstart ci wstart sub getinterval put PARA NW pnew put
+        /NW NW 1 add def /pnew false def } if
+      /wstart -1 def
+      cb 10 eq NW 0 gt and { /pnew true def } if
+    } { wstart 0 lt { /wstart ci def } if } ifelse
+  } for
+  % budget hit mid-sentence: mark the cut with an ellipsis
+  /cutmid false def
+  eos not NW 0 gt and { WORDS NW 1 sub get dup length 1 sub get /lc exch def
+    lc 46 ne lc 33 ne and lc 63 ne and lc 186 ne and { WORDS NW 1 sub 2 copy get (\274) cat put /cutmid true def } if } if
+
+  % ---- story column geometry ----
+  /SX 180 def /SW 360 def /STOP 652 def /SBOT 244 def
+  /measure { 0 1 NW 1 sub { /wi exch def WW wi WORDS wi get stringwidth pop put } for
+    /spw ( ) stringwidth pop def } bind def
+  /breaklines { /nlin 0 def /cx 0 def
+    0 1 NW 1 sub { /wi exch def /w WW wi get def
+      wi 0 eq { true } { PARA wi get } ifelse {
+        LS nlin wi put LIND nlin wi 0 gt { IND } { 0 } ifelse put
+        /cx LIND nlin get w add def /nlin nlin 1 add def
+      } {
+        cx spw add w add SW gt { LS nlin wi put LIND nlin 0 put /nlin nlin 1 add def /cx w def }
+                                { /cx cx spw add w add def } ifelse
+      } ifelse
+    } for
+    % no one-word last lines: pull a word down from the line above when that line has 3+ words
+    1 1 nlin 1 sub { /k exch def /ks LS k get def
+      /ke k nlin 1 sub lt { LS k 1 add get } { NW } ifelse def
+      /lastl ke NW ge { true } { PARA ke get } ifelse def
+      lastl ke ks sub 1 eq and PARA ks get not and {
+        ks LS k 1 sub get sub 3 ge { WW ks 1 sub get spw add WW ks get add SW le { LS k ks 1 sub put } if } if
+      } if
+    } for } bind def
+  /fitsize { /fit false def { /fs exch def /ld fs 1.42 mul def /IND fs 1.5 mul def
+    fs /Times-Roman F measure breaklines
+    nlin 1 sub ld mul STOP SBOT sub le { /fit true def exit } if } forall } bind def
+  % keep the "how this page was made" band if the story fits above it at 12 pt or more;
+  % otherwise drop the band and take the largest size (down to 8 pt) that fits
+  /SBOT 330 def [13 12.5 12] fitsize /BAND fit def
+  BAND not { /SBOT 244 def [13 12.5 12 11.5 11 10.5 10 9.5 9 8.5 8] fitsize } if
+
+  0 setgray
+  % ---- masthead ----
+  30 /Helvetica-Bold F 72 714 moveto (TONER-1) show
+  PRO { 30 /Helvetica F ( Pro) show } if
+  11 /Helvetica F 72 693 moveto (State of the art among language models that execute inside a print job.) show
+  8 /Helvetica-Bold F 540 731 moveto NPARAMS commas ( parameters) cat rshow
+  8 /Helvetica F 540 721 moveto (int8 weights, one scale per row) rshow
+  540 711 moveto (Inference runs inside the PostScript interpreter) rshow
+  680 1.5 hline
+
+  % ---- left rail ----
+  7 /Helvetica-Bold F 72 STOP moveto (SAMPLE OUTPUT) 0.9 tshow
+  8 /Helvetica F (Unedited model output. No prompt: generation starts at the BOS token.)
+    72 STOP 14 sub 88 10.5 wrap /RAILY exch def
+
+  % ---- story ----
+  fs /Times-Roman F
+  0 1 nlin 1 sub { /k exch def
+    /ke k nlin 1 sub lt { LS k 1 add get } { NW } ifelse def
+    /cx SX LIND k get add def /cy STOP k ld mul sub def
+    LS k get 1 ke 1 sub { /wi exch def cx cy moveto WORDS wi get show /cx cx WW wi get add spw add def } for
+  } for
+  NW 0 eq { 10 /Helvetica F SX STOP moveto (The model emitted its end-of-story token immediately.) show } if
+
+  % ---- token stream: the sampled token ids, drawn as their raw vocabulary pieces ----
+  /TKY STOP nlin 1 sub ld mul sub 46 sub dup RAILY 30 sub gt { pop RAILY 30 sub } if def /TKBOT 322 def
+  BAND NW 0 gt and TKY TKBOT sub 60 ge and {
+    7.5 /Courier F /tcw (M) stringwidth pop def
+    /tx SX def /ty TKY def /nshow 0 def
+    0 1 ntok 1 sub { /ti exch def
+      /tp VOCAB TOKS ti get get def /td tp length string def
+      0 1 tp length 1 sub { /tj exch def /tb tp tj get def
+        td tj tb 32 eq { 180 } { tb 10 eq { 182 } { tb 127 gt { 63 } { tb } ifelse } ifelse } ifelse put } for
+      /tbw td length tcw mul 4 add def
+      tx tbw add SX SW add gt { /tx SX def /ty ty 13.5 sub def } if
+      ty TKBOT lt { exit } if
+      0.4 setlinewidth tx ty 2.5 sub tbw 10 rectstroke
+      tx 2 add ty moveto td show
+      /tx tx tbw add 2 add def /nshow nshow 1 add def
+    } for
+    7 /Helvetica-Bold F 72 TKY moveto (TOKEN STREAM) 0.9 tshow
+    8 /Helvetica F
+    nshow ntok lt { (The first ) nshow 10 string cvs cat ( of ) cat ntok 10 string cvs cat ( sampled tokens) cat }
+                  { (All ) ntok 10 string cvs cat ( sampled tokens) cat } ifelse
+    (, one box per vocabulary piece. \264 marks a space, \266 a newline.) cat
+    72 TKY 14 sub 88 10.5 wrap pop
+  } if
+
+  % ---- how this page was made ----
+  BAND {
+    /bx0 180 def /bwd 104 def /bgap 24 def /by0 236 def /bht 54 def
+    7 /Helvetica-Bold F 72 277 moveto (HOW THIS PAGE) 0.9 tshow 72 268 moveto (WAS MADE) 0.9 tshow
+    /stepbox { /bt exch def /bl exch def /bi exch def /bxx bx0 bi bwd bgap add mul add def
+      0.75 setlinewidth bxx by0 bwd bht rectstroke
+      6.5 /Helvetica-Bold F bxx 8 add by0 bht add 13 sub moveto bl 0.7 tshow
+      8 /Helvetica F bt bxx 8 add by0 bht add 26 sub bwd 16 sub 9.5 wrap pop } bind def
+    0 (1  HOST) (Sends the print job. Performs no arithmetic.) stepbox
+    1 (2  INTERPRETER) (Parses the int8 weights, then runs the forward pass once per token.) stepbox
+    2 (3  PAGE) (The same job typesets the story and calls showpage.) stepbox
+    0.75 setlinewidth
+    [0 1] { /ai exch def /ax bx0 bwd add ai bwd bgap add mul add def /ay by0 bht 2 div add def
+      ax 5 add ay moveto ax bgap add 9 sub ay lineto stroke
+      ax bgap add 4 sub ay moveto -6 3 rlineto 0 -6 rlineto closepath fill } forall
+  } if
+
+  % ---- run card ----
+  /BY 152 def /BH 58 def /CW 93.6 def
+  0.75 setlinewidth 72 BY 468 BH rectstroke
+  0.5 setlinewidth 1 1 4 { CW mul 72 add dup BY moveto BY BH add lineto stroke } for
+  /cell { /cv exch def /cl exch def /cn exch def /cxx cn CW mul 72 add 9 add def
+    6.5 /Helvetica-Bold F cxx BY BH add 14 sub moveto cl 0.7 tshow
+    20 /Helvetica-Bold F cxx BY 15 add moveto cv show } bind def
+  0 (TOKENS) ntok 10 string cvs cell
+  1 (SECONDS) ms 1000 div 1 fmt cell
+  2 (TOKENS / SEC) tps dup 10 lt { 2 } { 1 } ifelse fmt cell
+  3 (SEED) SEED 12 string cvs cell
+  TEMP 0 le { 7.5 /Helvetica F ( \(unused\)) show } if
+  4 (TEMPERATURE) TEMP 0 le { (0) } { TEMP TEMP 10 mul round 10 div sub abs 0.001 lt { 1 } { 2 } ifelse TEMP exch fmt } ifelse cell
+  TEMP 0 le { 7.5 /Helvetica F ( greedy) show } if
+
+  % ---- footer ----
+  /flab { 6.5 /Helvetica-Bold F 72 exch moveto 0.7 tshow } bind def
+  /fval { 8 /Helvetica F 152 exch moveto show } bind def
+  /IDENT /product where { pop product } { (unknown interpreter) } ifelse def
+  /revision where { pop /IDENT IDENT dot cat (revision ) cat revision 12 string cvs cat def } if
+  /version where { pop /IDENT IDENT dot cat (PostScript version ) cat version cat def } if
+  (INTERPRETER) 128 flab IDENT 128 fval
+  (MODEL) 116 flab
+  MODELNAME ( \(Llama-2 architecture\)) cat dot cat (dim ) cat D 6 string cvs cat dot cat
+    NL 4 string cvs cat ( layers) cat dot cat NH 4 string cvs cat ( query / ) cat NKV 4 string cvs cat
+    ( KV heads) cat dot cat V commas cat (-token vocab) cat 116 fval
+  (STOPPED BY) 104 flab
+  eos { (End-of-story token, after ) ntok 10 string cvs cat ( tokens) cat }
+      { (Token budget: STEPS = ) STEPS 10 string cvs cat
+        cutmid { (. The story was cut off mid-thought.) } { (, reached before the end-of-story token.) } ifelse cat } ifelse
+  ndrop 0 gt { dot cat ndrop 10 string cvs cat ( non-Latin characters not typeset) cat } if 104 fval
+  0.5 setlinewidth 72 94 moveto 540 94 lineto stroke
+  9 /Helvetica-Bold F 72 79 moveto (Host compute: 0 FLOPs. Inference cost includes toner.) show
+  6.5 /Helvetica F
+  (Every word above was generated on-device, one token at a time, by the interpreter named in this footer; the host computer only sent bytes. Seconds are interpreter usertime spent generating. rand is implementation-defined, so the same seed on a different interpreter tells a different story.)
+    72 67 468 8 wrap pop
+  showpage
+} if

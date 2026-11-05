@@ -1,0 +1,107 @@
+% ---------------- TONER-1 house style for handout pages (after docs/TONER-1/src/modelcard.ps) ----------------
+% 54 pt margins, running header with a 1.8 pt rule, 0.5 pt footer rule with "Page n of N",
+% Helvetica / Times / Courier only. Everything lives in /TVH; pages run inside  TVH begin ... end.
+/TVH 300 dict def
+TVH begin
+% StandardEncoding plus a few Latin glyphs in unused slots
+/TNEnc StandardEncoding 256 array copy def
+TNEnc 128 /degree put       % \200
+TNEnc 129 /multiply put     % \201
+TNEnc 130 /plusminus put    % \202
+TNEnc 131 /minus put        % \203
+TNEnc 160 /space put        % \240  non-breaking space (not a wrap point)
+/refont { % /NewName /BaseFont refont -
+  findfont dup length dict begin
+    { 1 index /FID ne { def } { pop pop } ifelse } forall
+    /Encoding TNEnc def
+    currentdict
+  end definefont pop
+} bind def
+/TN-H  /Helvetica refont
+/TN-HB /Helvetica-Bold refont
+/TN-T  /Times-Roman refont
+/TN-TI /Times-Italic refont
+/TN-C  /Courier refont
+/fH   { /TN-H  findfont exch scalefont setfont } bind def
+/fHB  { /TN-HB findfont exch scalefont setfont } bind def
+/fT   { /TN-T  findfont exch scalefont setfont } bind def
+/fTI  { /TN-TI findfont exch scalefont setfont } bind def
+/fC   { /TN-C  findfont exch scalefont setfont } bind def
+
+/rsh { dup stringwidth pop neg 0 rmoveto show } bind def          % right-aligned
+/csh { dup stringwidth pop 2 div neg 0 rmoveto show } bind def    % centered
+/tsh { exch 0 exch ashow } bind def                               % (s) track tsh
+/tw  { exch dup stringwidth pop exch length 3 -1 roll mul add } bind def
+/trsh { 2 copy tw 1 index sub neg 0 rmoveto tsh } bind def        % right-aligned, tracked
+/tcsh { 2 copy tw 2 div 2 index length 0 gt { 1 index 2 div sub } if neg 0 rmoveto tsh } bind def  % centered, tracked
+/hl { % x1 x2 y linewidth gray -> horizontal rule
+  gsave setgray setlinewidth 0 setlinecap /ly exch def /lx2 exch def /lx1 exch def
+  newpath lx1 ly moveto lx2 ly lineto stroke grestore } bind def
+/vl { % x y1 y2 linewidth gray -> vertical rule
+  gsave setgray setlinewidth 0 setlinecap /ly2 exch def /ly1 exch def /lx exch def
+  newpath lx ly1 moveto lx ly2 lineto stroke grestore } bind def
+/rs { % x y w h linewidth gray -> stroked rectangle
+  gsave setgray setlinewidth /rh exch def /rw exch def /ry exch def /rx exch def
+  newpath rx ry moveto rw 0 rlineto 0 rh rlineto rw neg 0 rlineto closepath stroke
+  grestore } bind def
+/cat { /c2 exch def /c1 exch def c1 length c2 length add string
+  dup 0 c1 putinterval dup c1 length c2 putinterval } bind def
+/fmt { /fd exch def /fv exch def /fm 1 def fd { /fm fm 10 mul def } repeat   % num decimals -> string
+  /fi fv fm mul round cvi def fi fm idiv 12 string cvs
+  fd 0 gt { (.) cat /fr fi fm mod 12 string cvs def fd fr length sub { (0) cat } repeat fr cat } if } bind def
+/commas { 12 string cvs /cs exch def /cr () def /cn cs length def   % int -> "4,608"
+  0 1 cn 1 sub { /ci exch def ci 0 gt cn ci sub 3 mod 0 eq and { /cr cr (,) cat def } if
+    /cr cr cs ci 1 getinterval cat def } for cr } bind def
+/upper { dup length string copy dup length 1 sub 0 exch 1 exch { /ui exch def
+    dup ui get dup 97 ge exch 122 le and { dup ui 2 copy get 32 sub put } if } for } bind def
+
+% word-wrap flow engine:  left right baseline leading fl-begin ; then set a font and call (text) fseg
+/fl-begin { /fLd exch def /fY exch def /fR exch def /fL exch def
+  /fX fL def /fNoSp false def } bind def
+/fnl { /fY fY fLd sub def /fX fL def } bind def
+/fword { /fw exch def /fww fw stringwidth pop def
+  fX fL gt {
+    fNoSp { 0 } { ( ) stringwidth pop } ifelse /fsp exch def
+    fX fsp add fww add fR gt { fnl } { /fX fX fsp add def } ifelse
+  } if
+  /fNoSp false def
+  fX fY moveto fw show
+  /fX fX fww add def } bind def
+/fseg { % (text) fseg -- split on spaces and flow each word
+  { dup length 0 eq { pop exit } if
+    ( ) search
+    { exch pop exch /frest exch def dup length 0 gt { fword } { pop } ifelse frest }
+    { fword exit } ifelse
+  } loop } bind def
+/fjoin { /fNoSp true def } bind def
+
+% ---- page furniture ----
+/header { % (SECTION) header
+  /hsec exch def
+  0 setgray 7.2 fHB 54 731 moveto (TONER-1) 1.5 tsh
+  0.45 setgray 7.2 fH (   /   ) show
+  0 setgray hsec 1.5 tsh
+  0.35 setgray 7.2 fH 558 731 moveto (RELEASE 1.0   /   NOVEMBER 2026) 1.5 trsh
+  54 558 722 1.8 0 hl } bind def
+/footer { % (left text) (Page n of N) footer
+  /fpg exch def /ftx exch def
+  54 558 72 0.5 0 hl
+  0.3 setgray 6.6 fH 54 61 moveto ftx show
+  6.6 fHB 0 setgray 558 61 moveto fpg rsh } bind def
+/sechead { % x1 x2 y (TITLE) sechead -- tracked caps with a rule 5 pt below
+  /shT exch def /shy exch def /shx2 exch def /shx1 exch def
+  0 setgray 7.2 fHB shx1 shy moveto shT 1.2 tsh
+  shx1 shx2 shy 5 sub 0.8 0 hl } bind def
+% run card in house style: x y w h [ [(LABEL) (value)] ... ] statcard
+/statcard { /scv exch def /sch exch def /scw exch def /scy exch def /scx exch def
+  /scn scv length def /scc scw scn div def
+  scx scy scw sch 0.75 0 rs
+  1 1 scn 1 sub { scc mul scx add scy scy sch add 0.5 0 vl } for
+  0 1 scn 1 sub { /sci exch def /scxx sci scc mul scx add 8 add def
+    0 setgray 6.2 fHB scxx scy sch add 12 sub moveto scv sci get 0 get 0.7 tsh
+    15 fHB scxx scy 9 add moveto scv sci get 1 get show } for } bind def
+/IDENT /product where { pop product } { (unknown interpreter) } ifelse def
+/revision where { pop /IDENT IDENT ( \264 revision ) cat revision 12 string cvs cat def } if
+/version where { pop /IDENT IDENT ( \264 PostScript version ) cat version cat def } if
+end
+% ---------------- end of house style ----------------

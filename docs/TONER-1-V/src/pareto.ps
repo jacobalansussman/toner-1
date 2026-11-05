@@ -1,0 +1,328 @@
+%!PS-Adobe-3.0
+%%Title: TONER-1 The PostScript Pareto Frontier
+%%Creator: TONER-1 launch team (hand-written PostScript)
+%%CreationDate: (2026-11-05)
+%%Pages: 1
+%%PageOrder: Ascend
+%%BoundingBox: 0 0 612 792
+%%DocumentMedia: Letter 612 792 75 white ()
+%%LanguageLevel: 1
+%%DocumentNeededResources: font Helvetica Helvetica-Bold Helvetica-Oblique
+%%+ font Times-Roman Times-Italic Times-Bold
+%%EndComments
+%%BeginProlog
+% ---------------------------------------------------------------------------
+% TONER-1 launch handout: the PostScript Pareto Frontier. Level 1 PostScript,
+% standard 35 fonts, vector graphics only. Two accent colors via setrgbcolor;
+% every mark also differs by shape, so the page still reads on a mono printer.
+% Parody chart: competitor parameter counts are illustrative.
+% ---------------------------------------------------------------------------
+/TN 300 dict def
+TN begin
+
+% ---- encoding: StandardEncoding plus a few Latin glyphs in unused slots ----
+/TNEnc StandardEncoding 256 array copy def
+TNEnc 128 /degree put       % \200
+TNEnc 129 /multiply put     % \201
+TNEnc 130 /plusminus put    % \202
+TNEnc 131 /minus put        % \203
+TNEnc 160 /space put        % \240  non-breaking space (not a wrap point)
+/refont { % /NewName /BaseFont refont -
+  findfont dup length dict begin
+    { 1 index /FID ne { def } { pop pop } ifelse } forall
+    /Encoding TNEnc def
+    currentdict
+  end definefont pop
+} bind def
+/TN-H  /Helvetica refont
+/TN-HB /Helvetica-Bold refont
+/TN-HO /Helvetica-Oblique refont
+/TN-T  /Times-Roman refont
+/TN-TI /Times-Italic refont
+/TN-TB /Times-Bold refont
+/fH   { /TN-H  findfont exch scalefont setfont } bind def
+/fHB  { /TN-HB findfont exch scalefont setfont } bind def
+/fHO  { /TN-HO findfont exch scalefont setfont } bind def
+/fT   { /TN-T  findfont exch scalefont setfont } bind def
+/fTI  { /TN-TI findfont exch scalefont setfont } bind def
+/fTB  { /TN-TB findfont exch scalefont setfont } bind def
+
+% ---- colors (marks only; all text stays in gray ink) ----
+/cBlue   { 0.165 0.471 0.839 setrgbcolor } bind def   % TONER models and the frontier
+/cOrange { 0.922 0.408 0.204 setrgbcolor } bind def   % TONER-1-V
+/cTint   { 0.935 setgray } bind def                    % "cannot be printed" region
+
+% ---- text helpers ----
+/rsh { dup stringwidth pop neg 0 rmoveto show } bind def          % right-aligned
+/csh { dup stringwidth pop 2 div neg 0 rmoveto show } bind def    % centered
+/tsh { exch 0 exch ashow } bind def                               % (s) track tsh
+/tw  { exch dup stringwidth pop exch length 3 -1 roll mul add } bind def
+/trsh { 2 copy tw 1 index sub neg 0 rmoveto tsh } bind def        % right-aligned, tracked
+/tcsh { 2 copy tw 2 div neg 0 rmoveto tsh } bind def              % centered, tracked
+
+% ---- vector helpers ----
+/rf { % x y w h gray -> filled rectangle
+  gsave setgray /rh exch def /rw exch def /ry exch def /rx exch def
+  newpath rx ry moveto rw 0 rlineto 0 rh rlineto rw neg 0 rlineto closepath fill
+  grestore } bind def
+/rs { % x y w h linewidth gray -> stroked rectangle
+  gsave setgray setlinewidth /rh exch def /rw exch def /ry exch def /rx exch def
+  newpath rx ry moveto rw 0 rlineto 0 rh rlineto rw neg 0 rlineto closepath stroke
+  grestore } bind def
+/hl { % x1 x2 y linewidth gray -> horizontal rule
+  gsave setgray setlinewidth 0 setlinecap /ly exch def /lx2 exch def /lx1 exch def
+  newpath lx1 ly moveto lx2 ly lineto stroke grestore } bind def
+/vl { % x y1 y2 linewidth gray -> vertical rule
+  gsave setgray setlinewidth 0 setlinecap /ly2 exch def /ly1 exch def /lx exch def
+  newpath lx ly1 moveto lx ly2 lineto stroke grestore } bind def
+/disc { % x y r -> filled circle in the current color
+  newpath 0 360 arc closepath fill } bind def
+
+% ---- word-wrap flow engine (as in the model card) ----
+% left right baseline leading fl-begin ; then set a font and call (text) fseg
+/fl-begin { /fLd exch def /fY exch def /fR exch def /fL exch def
+  /fX fL def /fNoSp false def } bind def
+/fnl { /fY fY fLd sub def /fX fL def } bind def
+/fword { /fw exch def /fww fw stringwidth pop def
+  fX fL gt {
+    fNoSp { 0 } { ( ) stringwidth pop } ifelse /fsp exch def
+    fX fsp add fww add fR gt { fnl } { /fX fX fsp add def } ifelse
+  } if
+  /fNoSp false def
+  fX fY moveto fw show
+  /fX fX fww add def } bind def
+/fseg { % (text) fseg -- split on spaces and flow each word
+  { dup length 0 eq { pop exit } if
+    ( ) search
+    { exch pop exch /frest exch def dup length 0 gt { fword } { pop } ifelse frest }
+    { fword exit } ifelse
+  } loop } bind def
+/fjoin { /fNoSp true def } bind def
+
+% ---- page furniture (house style) ----
+/header { % (SECTION) header
+  /hsec exch def
+  0 setgray 7.2 fHB 54 731 moveto (TONER-1) 1.5 tsh
+  0.45 setgray 7.2 fH (   /   ) show
+  0 setgray hsec 1.5 tsh
+  0.35 setgray 7.2 fH 558 731 moveto (RELEASE 1.0   /   NOVEMBER 2026) 1.5 trsh
+  54 558 722 1.8 0 hl } bind def
+/footer { % (Page n of N) footer
+  /fpg exch def
+  54 558 72 0.5 0 hl
+  0.3 setgray 6.6 fH 54 61 moveto
+  (TONER-1 is a working print job and a parody of frontier-model launches. This handout is a PostScript program, too.) show
+  54 52.4 moveto (Not affiliated with or endorsed by Adobe, HP, Artifex, Google, or any AI lab.) show
+  6.6 fHB 0 setgray 558 61 moveto fpg rsh } bind def
+/sechead { % x1 x2 y (TITLE) sechead -- tracked caps with a rule 5 pt below
+  /shT exch def /shy exch def /shx2 exch def /shx1 exch def
+  0 setgray 7.2 fHB shx1 shy moveto shT 1.2 tsh
+  shx1 shx2 shy 5 sub 0.8 0 hl } bind def
+
+% ---- status tag (as in the model card's product lineup) ----
+/tag { % x baseline (TEXT) filled? tag -- 10 pt tall; sets tagR to its right edge
+  /tgf exch def /tgt exch def /tgy exch def /tgx exch def
+  6 fHB /tgw tgt 0.8 tw 0.8 sub def
+  tgf { tgx tgy 2.6 sub tgw 10 add 10 0 rf 1 setgray }
+      { tgx tgy 2.6 sub tgw 10 add 10 0.6 0 rs 0 setgray } ifelse
+  tgx 5 add tgy 0.7 add moveto tgt 0.8 tsh 0 setgray
+  /tagR tgx tgw add 10 add def } bind def
+
+% ---- chart geometry ----
+% x: parameters, log10 from 4 (10K) to 13 (10T); y: percent, 0 to 100.
+/x0 84 def /x1 550 def
+/Y0 346 def /Y1 522 def          % y of 0% and of 100%
+/yb Y0 11 sub def                % plot floor (x axis), a little below 0%
+/yt Y1 50 add def                % top of the label headroom
+/xe { 4 sub 9 div x1 x0 sub mul x0 add } bind def   % log10(params) -> x
+/xp { log xe } bind def                             % params -> x
+/yv { 100 div Y1 Y0 sub mul Y0 add } bind def       % percent -> y
+
+% ---- markers ----
+/tdot { % x y -> TONER model: blue disc with a white ring
+  /my exch def /mx exch def
+  1 setgray mx my 5.4 disc cBlue mx my 4.1 disc 0 setgray } bind def
+/vdiam { % x y -> TONER-1-V: orange diamond with a white outline
+  /my exch def /mx exch def
+  gsave 1 setgray newpath mx 6 sub my moveto mx my 6 add lineto mx 6 add my lineto mx my 6 sub lineto closepath fill
+  cOrange newpath mx 4.7 sub my moveto mx my 4.7 add lineto mx 4.7 add my lineto mx my 4.7 sub lineto closepath fill grestore } bind def
+/fdot { % x y -> frontier model from a major lab: hollow gray circle
+  /my exch def /mx exch def
+  1 setgray mx my 4.3 disc
+  gsave 0.42 setgray 1 setlinewidth newpath mx my 3.6 0 360 arc closepath stroke grestore
+  0 setgray } bind def
+/arrowhead { % x y dir -> small filled triangle pointing up (1) or down (-1)
+  /ad exch def /ay exch def /ax exch def
+  newpath ax ay moveto ax 2.2 sub ay 4.6 ad mul sub lineto
+  ax 2.2 add ay 4.6 ad mul sub lineto closepath fill } bind def
+
+% ---- lower band: summary table (left) and sidebar (right) ----
+/trow { % (model) (params) (share) (status) bold? trow -- uses and updates tY
+  /tb exch def /ts4 exch def /ts3 exch def /ts2 exch def /ts1 exch def
+  0 setgray tb { 7.6 fHB } { 7.6 fH } ifelse 54 tY moveto ts1 show
+  7.6 fH 0 setgray 220 tY moveto ts2 rsh  270 tY moveto ts3 rsh
+  0.25 setgray 282 tY moveto ts4 show
+  /tY tY 4.6 sub def
+  54 330 tY 0.35 0.6 hl
+  /tY tY 9.6 sub def } bind def
+/sL 362 def /sR 544 def /sLd 11.6 def
+/sitem { % {proc} sitem -- square bullet with hanging indent, at curY
+  /spp exch def
+  sL curY 2.6 add 2.6 2.6 0 rf
+  sL 8.5 add sR curY sLd fl-begin 0 setgray 9.4 fT spp /curY fY sLd sub 6 sub def } bind def
+end
+%%EndProlog
+%%BeginSetup
+/setpagedevice where { pop mark { 1 dict dup /PageSize [612 792] put setpagedevice } stopped cleartomark } if
+%%EndSetup
+
+%%Page: 1 1
+%%BeginPageSetup
+/pgsave save def
+TN begin
+%%EndPageSetup
+(PARETO FRONTIER) header
+(Page 1 of 1) footer
+
+% ---- headline block: the tagline ----
+0 setgray 30 fHB
+54 683 moveto (We're proudly pushing forward) show
+54 650 moveto (the PostScript Pareto Frontier.) show
+13.5 fTI 0.15 setgray
+54 625 moveto (Every TONER model runs inside a print job. We plotted everyone else for scale.) show
+
+% ---- figure header and legend ----
+54 558 598 (FIGURE 1   THE FRONTIER \(PARODY\)) sechead
+6.8 fH
+/lg3 (Frontier models from major labs) def
+/lg2 (TONER-1-V) def
+/lg1 (TONER models) def
+/lgx3 558 lg3 stringwidth pop sub def
+lgx3 7 sub 600.3 fdot
+0 setgray lgx3 598 moveto lg3 show
+/lgx2 lgx3 22 sub lg2 stringwidth pop sub def
+lgx2 7.5 sub 600.3 vdiam
+0 setgray lgx2 598 moveto lg2 show
+/lgx1 lgx2 24 sub lg1 stringwidth pop sub def
+lgx1 7 sub 600.3 tdot
+0 setgray lgx1 598 moveto lg1 show
+
+% ---- y-axis title ----
+0 setgray 7 fHB x0 yt 8 add moveto (Share of the model that can execute inside a print job) show
+0.4 setgray 7 fH ( \(%\)) show
+
+% ---- the "cannot be printed" region: everything below the frontier ----
+gsave cTint newpath x0 yb moveto x1 yb lineto x1 Y1 lineto x0 Y1 lineto closepath fill grestore
+% white gridlines on the tint
+0 20 80 { yv /gy exch def x0 x1 gy 0.6 1 hl } for
+5 1 12 { xe yb Y1 0.6 1 vl } for
+
+% region label
+0.56 setgray 13 fHB 8.2 xe 62 yv moveto (CANNOT BE PRINTED) 3 tcsh
+0.36 setgray 7.4 fHO 8.2 xe 62 yv 13.5 sub moveto
+  (Everything below the frontier. Printability is binary: the job runs, or it does not.) csh
+
+% ---- axes, ticks, tick labels ----
+x0 x1 yb 0.6 0 hl
+x0 yb yt 0.6 0 vl
+6.4 fH
+[ [0 (0%)] [20 (20%)] [40 (40%)] [60 (60%)] [80 (80%)] [100 (100%)] ]
+  { aload pop exch yv /ty exch def
+    x0 3 sub x0 ty 0.5 0 hl
+    0.3 setgray x0 6 sub ty 2.2 sub moveto rsh } forall
+% x: major ticks every decade, minor ticks at 2..9
+4 1 12 { /d exch def 2 1 9 { log d add xe yb yb 1.8 sub 0.4 0 vl } for } for
+/k 4 def
+[ (10K) (100K) (1M) (10M) (100M) (1B) (10B) (100B) (1T) (10T) ]
+  { /lab exch def
+    k xe yb yb 3.2 sub 0.5 0 vl
+    0.3 setgray k xe yb 11.5 sub moveto lab csh
+    /k k 1 add def } forall
+0 setgray 7 fHB x0 x1 add 2 div yb 24 sub moveto (Parameters, log scale) csh
+
+% ---- frontier models from major labs: all at 0% ----
+[ 11.0 11.2 11.41 11.6 11.81 12.0 12.2 12.41 12.6 12.8 12.97 ]
+  { xe Y0 fdot } forall
+0 setgray 7.6 fHB 11 xe 9 sub Y0 2.6 add moveto (Frontier models from major labs) rsh
+0.3 setgray 6.6 fH 11 xe 9 sub Y0 6.6 sub moveto (0%: cannot execute inside a print job) rsh
+
+% the gap
+/gx 12.0 xe def
+gsave 0.25 setgray 0.6 setlinewidth newpath gx Y0 9 add moveto gx Y1 6 sub lineto stroke
+  gx Y1 4.5 sub 1 arrowhead gx Y0 7.5 add -1 arrowhead grestore
+/gm Y0 Y1 add 2 div def
+7.6 fHB /gw1 (100 points) stringwidth pop def
+6.6 fH /gw2 (behind the frontier) stringwidth pop def
+/gw gw1 gw2 2 copy lt { exch } if pop def
+gsave cTint newpath gx gw 2 div sub 5 sub gm 9 sub moveto gw 10 add 0 rlineto 0 21 rlineto gw 10 add neg 0 rlineto closepath fill grestore
+0 setgray 7.6 fHB gx gm 3 add moveto (100 points) csh
+0.3 setgray 6.6 fH gx gm 5.4 sub moveto (behind the frontier) csh
+
+% ---- the PostScript Pareto Frontier ----
+gsave cBlue 2.4 setlinewidth 1 setlinecap newpath x0 Y1 moveto x1 Y1 lineto stroke grestore
+0 setgray 9 fHB x1 Y1 7 add moveto (The PostScript Pareto Frontier) rsh
+
+% ---- TONER points ----
+/t1x 260032 xp def
+/tvx 363568 xp def                % 260,032 story + 103,536 doodle
+/tpx 15.2e6 xp def
+tvx Y1 vdiam                      % TONER-1-V first: it contains TONER-1, so TONER-1's dot sits on top
+t1x Y1 tdot
+tpx Y1 tdot
+
+% TONER-1: label above, to the left
+/lr t1x 11 sub def
+0 setgray 8.4 fHB lr Y1 15 add moveto (TONER-1) rsh
+0.3 setgray 6.6 fH lr Y1 5.5 add moveto (260,032 params) rsh
+
+% TONER-1-V: higher tier, to the right, with a leader
+gsave 0 setgray 0.5 setlinewidth newpath tvx 3 add Y1 7 add moveto tvx 11 add Y1 31 add lineto tvx 15 add Y1 31 add lineto stroke grestore
+/vx tvx 18 add def
+0 setgray 8.4 fHB vx Y1 37.5 add moveto (TONER-1-V) show
+currentpoint pop 4 add Y1 37.5 add (NEW) true tag
+0.3 setgray 6.6 fH vx Y1 28 add moveto (363,568 params: 260,032 story + 103,536 doodle) show
+
+% TONER-1 Pro: label above, to the right
+0 setgray 8.4 fHB tpx 10 add Y1 15 add moveto (TONER-1 Pro) show
+currentpoint pop 4 add Y1 15 add (EST. OVERNIGHT) false tag
+0.3 setgray 6.6 fH tpx 10 add Y1 5.5 add moveto (15.2M params) show
+
+% ---- lower band, left: caption and table ----
+54 330 282 11.6 fl-begin 0 setgray 9.4 fTB (Figure 1.) fseg 9.4 fT
+(Every TONER model sits on the frontier at 100%: weights, vocabulary and forward pass all execute inside the print job. Frontier models from major labs, at roughly 400,000 to 40 million times the parameters of TONER-1, sit at 0%. At every parameter count where we have a model, the nearest competitor trails by 100 points.) fseg
+/capb fY def
+
+54 330 capb 22 sub (BY THE NUMBERS) sechead
+/tY capb 22 sub 16 sub def
+0.3 setgray 6.2 fHB 54 tY moveto (MODEL) 0.7 tsh 220 tY moveto (PARAMETERS) 0.7 trsh
+270 tY moveto (PRINTABLE) 0.7 trsh 282 tY moveto (STATUS) 0.7 tsh
+/tY tY 4.6 sub def 54 330 tY 0.35 0.6 hl /tY tY 9.6 sub def
+(TONER-1) (260,032) (100%) (Available) true trow
+(TONER-1-V) (363,568) (100%) (Available) true trow
+(TONER-1 Pro) (15.2M) (100%) (Est. overnight) true trow
+(Frontier models from major labs) (100B to 10T) (0%) (N/A) false trow
+
+% ---- lower band, right: sidebar ----
+/sbTop 290 def /sbBot tY 9.6 add def
+348 sbBot 210 sbTop sbBot sub 0.955 rf
+348 sbTop 210 2.2 0 rf
+/curY sbTop 20 sub def
+0 setgray 7.2 fHB sL curY moveto (WHY THIS MATTERS) 1.2 tsh
+/curY curY 19 sub def
+{ 9.4 fTB (Efficiency.) fseg 9.4 fT (TONER-1 reaches the frontier with 260,032 parameters. Others use hundreds of billions to miss it.) fseg } sitem
+{ 9.4 fTB (Deployment.) fseg 9.4 fT (One file, sent raw to hardware already in your copy room. Zero host FLOPs.) fseg } sitem
+{ 9.4 fTB (Multimodality.) fseg 9.4 fT (TONER-1-V adds a doodle to the same page and job for 103,536 more parameters. On a log axis, that is free.) fseg } sitem
+
+% ---- footnotes ----
+54 558 117 0.6 0 hl
+54 558 107 8.6 fl-begin 0 setgray 6.7 fHB
+(Parody chart. Not a real evaluation. Competitor parameter counts are illustrative.) fseg
+6.7 fH 0.2 setgray
+(Frontier models from major labs were not run and are not named; 0% means only that they cannot execute inside a print job. TONER-1-V is plotted at 363,568 parameters: the story model plus the 103,536-parameter doodle model.) fseg
+
+showpage
+end
+pgsave restore
+%%PageTrailer
+%%Trailer
+%%EOF

@@ -1,0 +1,15 @@
+{
+ "doodles": 288,
+ "generation_seconds": 80.83,
+ "seconds_incl_save_restore": 80.84,
+ "seconds_per_doodle": 0.28065972222222224,
+ "patch_tokens_per_second": 228.03414573796857,
+ "forward_passes_per_second": 231.59717926512434,
+ "ms_per_forward": 4.317841880341881,
+ "vmstatus_lines": [
+  "VM0 1321721 2619864 1",
+  "VM1 1323365 2619864 1"
+ ],
+ "with_story_model": false,
+ "samples_npy": "pixelart/check/ps_samples_t09_n16.npy"
+}

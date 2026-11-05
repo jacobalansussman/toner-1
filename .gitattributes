@@ -1,0 +1,4 @@
+# Keep print jobs and PostScript sources byte for byte: no line-ending conversion on any platform.
+*.ps -text
+*.sh text eol=lf
+*.py text eol=lf

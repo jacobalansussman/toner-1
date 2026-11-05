@@ -1,0 +1,435 @@
+%!PS-Adobe-3.0
+%%Title: TONER-1 Model Card and Benchmarks
+%%Creator: TONER-1 launch team (hand-written PostScript)
+%%CreationDate: (2026-11-05)
+%%Pages: 2
+%%PageOrder: Ascend
+%%BoundingBox: 0 0 612 792
+%%DocumentMedia: Letter 612 792 75 white ()
+%%LanguageLevel: 1
+%%DocumentNeededResources: font Helvetica Helvetica-Bold Helvetica-Oblique
+%%+ font Times-Roman Times-Italic Times-Bold Courier
+%%EndComments
+%%BeginProlog
+% ---------------------------------------------------------------------------
+% TONER-1 launch handout. Level 1 PostScript, standard 35 fonts, grayscale.
+% Everything below is drawn with vector graphics; no images.
+% ---------------------------------------------------------------------------
+/TN 400 dict def
+TN begin
+
+% ---- encoding: StandardEncoding plus a few Latin glyphs in unused slots ----
+/TNEnc StandardEncoding 256 array copy def
+TNEnc 128 /degree put       % \200
+TNEnc 129 /multiply put     % \201
+TNEnc 130 /plusminus put    % \202
+TNEnc 131 /minus put        % \203
+TNEnc 160 /space put        % \240  non-breaking space (not a wrap point)
+/refont { % /NewName /BaseFont refont -
+  findfont dup length dict begin
+    { 1 index /FID ne { def } { pop pop } ifelse } forall
+    /Encoding TNEnc def
+    currentdict
+  end definefont pop
+} bind def
+/TN-H  /Helvetica refont
+/TN-HB /Helvetica-Bold refont
+/TN-HO /Helvetica-Oblique refont
+/TN-T  /Times-Roman refont
+/TN-TI /Times-Italic refont
+/TN-TB /Times-Bold refont
+/TN-C  /Courier refont
+/fH   { /TN-H  findfont exch scalefont setfont } bind def
+/fHB  { /TN-HB findfont exch scalefont setfont } bind def
+/fHO  { /TN-HO findfont exch scalefont setfont } bind def
+/fT   { /TN-T  findfont exch scalefont setfont } bind def
+/fTI  { /TN-TI findfont exch scalefont setfont } bind def
+/fTB  { /TN-TB findfont exch scalefont setfont } bind def
+/fC   { /TN-C  findfont exch scalefont setfont } bind def
+
+% ---- text helpers ----
+/rsh { dup stringwidth pop neg 0 rmoveto show } bind def          % right-aligned
+/csh { dup stringwidth pop 2 div neg 0 rmoveto show } bind def    % centered
+/tsh { exch 0 exch ashow } bind def                               % (s) track tsh
+/tw  { exch dup stringwidth pop exch length 3 -1 roll mul add } bind def
+/trsh { 2 copy tw 1 index sub neg 0 rmoveto tsh } bind def        % right-aligned, tracked
+/nstr 16 string def
+
+% ---- vector helpers ----
+/rf { % x y w h gray -> filled rectangle
+  gsave setgray /rh exch def /rw exch def /ry exch def /rx exch def
+  newpath rx ry moveto rw 0 rlineto 0 rh rlineto rw neg 0 rlineto closepath fill
+  grestore } bind def
+/rs { % x y w h linewidth gray -> stroked rectangle
+  gsave setgray setlinewidth /rh exch def /rw exch def /ry exch def /rx exch def
+  newpath rx ry moveto rw 0 rlineto 0 rh rlineto rw neg 0 rlineto closepath stroke
+  grestore } bind def
+/hl { % x1 x2 y linewidth gray -> horizontal rule
+  gsave setgray setlinewidth 0 setlinecap /ly exch def /lx2 exch def /lx1 exch def
+  newpath lx1 ly moveto lx2 ly lineto stroke grestore } bind def
+/vl { % x y1 y2 linewidth gray -> vertical rule
+  gsave setgray setlinewidth 0 setlinecap /ly2 exch def /ly1 exch def /lx exch def
+  newpath lx ly1 moveto lx ly2 lineto stroke grestore } bind def
+/hatchbox { % x y w h -> diagonal hatch, clipped, with a thin outline
+  /hh exch def /hw exch def /hy exch def /hx exch def
+  gsave
+    newpath hx hy moveto hw 0 rlineto 0 hh rlineto hw neg 0 rlineto closepath clip
+    newpath 0.4 setlinewidth 0.6 setgray
+    hx hh sub 3.2 hx hw add { hy moveto hh hh rlineto } for stroke
+  grestore
+  hx hy hw hh 0.5 0.45 rs } bind def
+/arrowv { % x baseline up? -> small vector arrow (up or down), 5.6 pt tall
+  /aup exch def /ay exch def /ax exch def
+  gsave 0 setgray 0.7 setlinewidth 0 setlinecap newpath
+  aup { ax ay moveto ax ay 3.6 add lineto stroke
+        newpath ax 1.7 sub ay 3.2 add moveto ax 1.7 add ay 3.2 add lineto ax ay 5.8 add lineto closepath fill }
+      { ax ay 5.8 add moveto ax ay 2.2 add lineto stroke
+        newpath ax 1.7 sub ay 2.6 add moveto ax 1.7 add ay 2.6 add lineto ax ay lineto closepath fill } ifelse
+  grestore } bind def
+/dot  { % x y r -> filled circle
+  newpath 0 360 arc closepath fill } bind def
+/odot { % x y r -> hollow circle with white fill
+  /oR exch def /oy exch def /ox exch def
+  gsave newpath ox oy oR 0 360 arc closepath 1 setgray fill grestore
+  gsave newpath ox oy oR 0 360 arc closepath 0.6 setlinewidth 0 setgray stroke grestore } bind def
+
+% ---- word-wrap flow engine ----
+% left right baseline leading fl-begin ; then set a font and call (text) fseg
+% repeatedly (fonts may change between segments). fY holds the last baseline.
+/fl-begin { /fLd exch def /fY exch def /fR exch def /fL exch def
+  /fX fL def /fNoSp false def } bind def
+/fnl { /fY fY fLd sub def /fX fL def } bind def
+/fword { /fw exch def /fww fw stringwidth pop def
+  fX fL gt {
+    fNoSp { 0 } { ( ) stringwidth pop } ifelse /fsp exch def
+    fX fsp add fww add fR gt { fnl } { /fX fX fsp add def } ifelse
+  } if
+  /fNoSp false def
+  fX fY moveto fw show
+  /fX fX fww add def } bind def
+/fseg { % (text) fseg -- split on spaces and flow each word
+  { dup length 0 eq { pop exit } if
+    ( ) search
+    { exch pop exch /frest exch def dup length 0 gt { fword } { pop } ifelse frest }
+    { fword exit } ifelse
+  } loop } bind def
+/fjoin { /fNoSp true def } bind def    % next word attaches with no space
+
+% ---- page furniture ----
+/header { % (SECTION) header
+  /hsec exch def
+  0 setgray 7.2 fHB 54 731 moveto (TONER-1) 1.5 tsh
+  0.45 setgray 7.2 fH (   /   ) show
+  0 setgray hsec 1.5 tsh
+  0.35 setgray 7.2 fH 558 731 moveto (RELEASE 1.0   /   NOVEMBER 2026) 1.5 trsh
+  54 558 722 1.8 0 hl } bind def
+/footer { % (page n of 2) footer
+  /fpg exch def
+  54 558 72 0.5 0 hl
+  0.3 setgray 6.6 fH 54 61 moveto
+  (TONER-1 is a working print job and a parody of frontier-model launches. This handout is a PostScript program, too.) show
+  54 52.4 moveto (Not affiliated with or endorsed by Adobe, HP, Artifex, Google, or any AI lab.) show
+  6.6 fHB 0 setgray 558 61 moveto fpg rsh } bind def
+/sechead { % x1 x2 y (TITLE) sechead -- tracked caps with a rule 5 pt below
+  /shT exch def /shy exch def /shx2 exch def /shx1 exch def
+  0 setgray 7.2 fHB shx1 shy moveto shT 1.2 tsh
+  shx1 shx2 shy 5 sub 0.8 0 hl } bind def
+
+% ---- page 1: specification table (left, x 54..384) ----
+/spec { % (label) {value} spec   -- uses and updates rowY
+  /svp exch def /slb exch def
+  0 setgray 7.4 fHB 54 rowY 10.6 sub moveto slb 0.15 tsh
+  150 384 rowY 10.6 sub 10.3 fl-begin 0 setgray 8.2 fH svp
+  /rowY fY 5.2 sub def
+  54 384 rowY 0.35 0.6 hl } bind def
+
+% ---- page 1: right column (x 402..558) ----
+/cL 402 def /cR 558 def /cLd 11.3 def
+/chead { % (TITLE) chead -- at curY
+  cL cR curY 4 -1 roll sechead /curY curY 5 sub 11.8 sub def } bind def
+/cpara { % {proc} cpara
+  /cpp exch def cL cR curY cLd fl-begin 0 setgray 9 fT cpp /curY fY cLd sub def } bind def
+/citem { % {proc} citem -- square bullet with hanging indent
+  /cpp exch def
+  cL curY 2.6 add 2.6 2.6 0 rf
+  cL 8.5 add cR curY cLd fl-begin 0 setgray 9 fT cpp /curY fY cLd sub 2.2 sub def } bind def
+
+% ---- page 1: product lineup box ----
+/lbox { % x (Name) (TAG) tagfilled? (specline) {desc} lbox
+  /lbd exch def /lbs exch def /lbf exch def /lbt exch def /lbn exch def /lbx exch def
+  /lbw 156 def /lbtop 171 def /lbh 80 def
+  lbx lbtop lbh sub lbw lbh 0.6 0 rs
+  0 setgray 10.6 fHB lbx 9 add lbtop 16 sub moveto lbn show
+  % tag
+  6 fHB /lbtw lbt 0.8 tw 0.8 sub def
+  lbf { lbx lbw add 9 sub lbtw sub 5 sub lbtop 18.6 sub lbtw 10 add 10 0 rf 1 setgray }
+      { lbx lbw add 9 sub lbtw sub 5 sub lbtop 18.6 sub lbtw 10 add 10 0.6 0 rs 0 setgray } ifelse
+  lbx lbw add 9 sub lbtw sub lbtop 15.3 sub moveto lbt 0.8 tsh
+  lbx 9 add lbx lbw add 9 sub lbtop 23.5 sub 0.35 0.6 hl
+  0.25 setgray 6.8 fHB lbx 9 add lbtop 33 sub moveto lbs 0.3 tsh
+  lbx 9 add lbx lbw add 9 sub lbtop 44.5 sub 9.8 fl-begin 0 setgray 8.4 fT lbd } bind def
+
+% ---- page 2: benchmark panel (small multiples) ----
+/px0 238 def /px1 522 def /pW px1 px0 sub def
+/xv { pMax div pW mul px0 add } bind def
+/tlab { % value x y -> centered tick label with pPre/pSuf
+  /ty exch def /tx exch def cvi nstr cvs /tn exch def
+  /tws pPre stringwidth pop tn stringwidth pop add pSuf stringwidth pop add def
+  tx tws 2 div sub ty moveto pPre show tn show pSuf show } bind def
+/panel { % expects pTop pName pDesc pDir pMax pStep pVal pValS pPre pSuf pExtra
+  % left block: name, description, direction
+  0 setgray 9.6 fHB 54 pTop 11 sub moveto pName show
+  54 212 pTop 21 sub 8.4 fl-begin 0.3 setgray 7 fH pDesc
+  /pdy fY 10.2 sub def
+  0 setgray 6.2 fHB 54 pdy moveto pDir 0 eq { (HIGHER IS BETTER) } { (LOWER IS BETTER) } ifelse 0.7 tsh
+  currentpoint exch 4.6 add exch pDir 0 eq arrowv
+  % gridlines, ticks, tick labels
+  /pAx pTop 41 sub def
+  6.4 fH
+  0 pStep pMax {
+    /tv exch def
+    tv 0 gt { tv xv pAx pTop 5 sub 0.3 0.78 vl } if
+    tv xv pAx pAx 2.6 sub 0.5 0 vl
+    0.3 setgray tv tv xv pAx 9.4 sub tlab
+  } for
+  % TONER-1 bar
+  px0 pTop 21 sub pVal xv px0 sub 11 0.12 rf
+  % frontier models: no result
+  px0 pTop 36 sub pW 11 hatchbox
+  6.6 fHO /nas (N/A: cannot execute inside a print job) def
+  /nw nas stringwidth pop def
+  px0 pW 2 div add nw 2 div sub 5 sub pTop 34.6 sub nw 10 add 8.2 1 rf
+  0.2 setgray px0 pW 2 div add nw 2 div sub pTop 32.9 sub moveto nas show
+  % axis
+  px0 px1 pAx 0.6 0 hl
+  px0 pTop 5 sub pAx 0.6 0 vl
+  pExtra
+  % value label on the TONER-1 bar
+  8 fHB /vw pValS stringwidth pop def /vx pVal xv def
+  vx 5 add vw add 558 gt
+    { 1 setgray vx 5 sub vw sub pTop 18.4 sub moveto pValS show }
+    { 0 setgray vx 5 add pTop 18.4 sub moveto pValS show } ifelse
+  % separator
+  54 558 pTop 57 sub 0.35 0.7 hl } bind def
+
+% ---- page 2: scaling-law plot ----
+/gx0 86 def /gx1 320 def /gy0 162 def /gy1 260 def
+/pgx { log 4 div gx1 gx0 sub mul gx0 add } bind def     % pages -> x (1..10^4)
+/pgy { 20 sub 60 div gy1 gy0 sub mul gy0 add } bind def % quality -> y (20..80)
+
+% ---- page 2: evaluation setup rows (x 350..558) ----
+/erow { % (label) {value} erow -- uses and updates eY
+  /evp exch def /elb exch def
+  0 setgray 6.8 fHB 348 eY 9.6 sub moveto elb show
+  414 558 eY 9.6 sub 8.8 fl-begin 0 setgray 7.3 fH evp
+  /eY fY 4.6 sub def
+  348 558 eY 0.35 0.6 hl } bind def
+end
+%%EndProlog
+%%BeginSetup
+/setpagedevice where { pop mark { 1 dict dup /PageSize [612 792] put setpagedevice } stopped cleartomark } if
+%%EndSetup
+
+%%Page: 1 1
+%%BeginPageSetup
+/pgsave save def
+TN begin
+%%EndPageSetup
+(MODEL CARD) header
+(Page 1 of 2) footer
+
+% ---- headline block ----
+0 setgray 30 fHB
+54 683 moveto (TONER-1: a frontier model) show
+54 650 moveto (with a paper trail.) show
+13.5 fTI 0.15 setgray
+54 625 moveto (State of the art among language models that run entirely inside a print job.) show
+
+% ---- qualifier stack ----
+68 552 598 14.6 fl-begin 0 setgray 11 fT
+(The most capable open-weight, US-Letter-native, sub-300K-parameter, PostScript-native, zero-host-FLOP, duplex-ready language model running on hardware already in your copy room.) fseg
+11 fTI (Evaluated on 20\240lb bond at room temperature.) fseg
+/qb fY 4.5 sub def
+54 qb 2.6 606.5 qb sub 0 rf
+
+% ---- specification table ----
+54 384 545 (SPECIFICATIONS) sechead
+/rowY 540 def
+(Base model) { (Karpathy's llama2.c stories260K, trained on TinyStories) fseg } spec
+(Parameters) { (260,032) fseg } spec
+(Architecture) { (Llama-2 decoder: 5 layers, dim 64, 8 query heads / 4 KV heads, head size 8, SwiGLU FFN \(hidden 172\), RoPE, RMSNorm) fseg } spec
+(Vocabulary) { (512-token SentencePiece) fseg } spec
+(Quantization) { (int8 weights, one scale per row; activations in PostScript reals; embedding shared with the output head) fseg } spec
+(Context window) { (8.5 \201 11 in. \(512 tokens\)) fseg } spec
+(KV cache) { (Persistent, archival, recyclable) fseg } spec
+(Job size) { (595 KB, one file:) fseg 8 fC (toner1.ps) fseg 8.2 fH fjoin (. Weights, vocabulary, a forward pass of about 100 lines and its own page layout) fseg } spec
+(Speed, measured) { (About 55 tok/s in Ghostscript 10.07 on an Apple-silicon Mac, in about 3.5 MB of PostScript VM) fseg } spec
+(Speed, printer) { (0.3 to 5 tok/s, estimated, not yet measured. A 200-token page takes roughly 1 to 10 minutes) fseg } spec
+(Time to first token) { (Includes fuser warm-up) fseg } spec
+(Accelerator) { (The office's hottest inference chip \(fuser, typically about 200 \200C\)) fseg } spec
+(Host compute) { (0 FLOPs. The host only sends bytes:) fseg fnl 8 fC (nc <printer-ip> 9100 < toner1.ps) fseg } spec
+(Output modality) { (Native toner) fseg } spec
+(Open weights) { (Literally. Hex appendix available; OCR to load) fseg } spec
+(Pricing) { (Inference cost includes toner) fseg } spec
+
+% ---- right column ----
+/curY 545 def
+(INTENDED USE) chead
+{ (Writing short children's stories, one US Letter sheet at a time, on a printer you own or have permission to use. Demonstrating that a print job is a program.) fseg 9 fTI (Out of scope: prompts. The model chooses the plot.) fseg } cpara
+/curY curY 9 sub def
+(LIMITATIONS) chead
+{ (It is 260K parameters.) fseg } citem
+{ (It mostly writes about Lily and Tim.) fseg } citem
+{ (It will hallucinate a quiet salad.) fseg } citem
+{ (No prompt input: every story starts from the beginning-of-sequence token.) fseg } citem
+{ (Needs a PostScript interpreter, Level 2 or later. PCL- or GDI-only printers may print the file as text.) fseg } citem
+{ (Long jobs may hit the printer's job timeout or run out of VM.) fseg } citem
+/curY curY 7 sub def
+(SAFETY) chead
+{ (Refuses to generate while Tray 2 is open. Close the tray to proceed.) fseg } citem
+{ 9 fTB (Air-gapped mode:) fseg 9 fT (unplug Ethernet once the job has uploaded.) fseg } citem
+{ 9 fTB (Kill switch:) fseg 9 fT (the power button.) fseg } citem
+{ (Outputs are fused to paper and can no longer execute.) fseg } citem
+
+% ---- product lineup ----
+54 558 186 (PRODUCT LINEUP) sechead
+54 (TONER-1) (AVAILABLE) true (STORIES260K  /  595 KB JOB)
+  { (The everyday copy-room model. Under 4\240s per page in Ghostscript; an estimated 1\240to\24010\240minutes on a real printer.) fseg } lbox
+228 (TONER-1 Pro) (EST. OVERNIGHT) false (STORIES15M  /  31.6 MB JOB)
+  { (Same print job, about 58 times the parameters. Estimated: send it at close of business, collect your story in the morning.) fseg } lbox
+402 (TONER-1 Classic) (PLANNED) false (1985 LASERWRITER  /  68000)
+  { (A 1985-native AI PC. The LaserWriter's 12\240MHz 68000 was faster than the 7.8\240MHz Macintosh it was plugged into.) fseg } lbox
+
+showpage
+end
+pgsave restore
+%%PageTrailer
+
+%%Page: 2 2
+%%BeginPageSetup
+/pgsave save def
+TN begin
+%%EndPageSetup
+(BENCHMARKS) header
+(Page 2 of 2) footer
+
+% ---- headline block ----
+0 setgray 30 fHB
+54 683 moveto (Undefeated inside a print job.) show
+54 559 659 17 fl-begin 0.15 setgray 13.5 fTI
+(TONER-1 posts a result on every benchmark it can enter. Frontier models from major labs were offered identical conditions: one print job, one sheet, zero host FLOPs.) fseg
+
+% ---- figure 1 header and legend ----
+54 558 607 (FIGURE 1   HEADLINE RESULTS \(PARODY\)) sechead
+6.8 fH 0 setgray
+/lgx 558 (Frontier models from major labs) stringwidth pop sub 15 sub def
+lgx 605.4 11 6.4 hatchbox
+0 setgray lgx 15 add 607 moveto (Frontier models from major labs) show
+/lgx2 lgx 22 sub (TONER-1 \(stories260K, int8\)) stringwidth pop sub 15 sub def
+lgx2 605.4 11 6.4 0.12 rf
+0 setgray lgx2 15 add 607 moveto (TONER-1 \(stories260K, int8\)) show
+
+% ---- the five panels ----
+/pPre () def /pSuf () def /pExtra {} def
+
+/pTop 599 def /pName (TPS \(Tokens Per Sheet\)) def
+/pDesc { (Output tokens per US Letter sheet, simplex. Not to be confused with tokens per second.) fseg } def
+/pDir 0 def /pMax 250 def /pStep 50 def /pVal 200 def /pValS (200) def
+panel
+
+/pTop 541 def /pName (HelloPaperJam) def
+/pDesc { (Copy-room commonsense, 4-way multiple choice. Parody of HellaSwag.) fseg } def
+/pDir 0 def /pMax 100 def /pStep 20 def /pVal 27.9 def /pValS (27.9%) def /pSuf (%) def
+/pExtra {
+  gsave [1.6 1.4] 0 setdash 25 xv pTop 2 sub pTop 23 sub 0.7 0 vl grestore
+  5.8 fHO 0.25 setgray 25 xv 2.5 add pTop 7 sub moveto (chance) show } def
+panel
+/pExtra {} def
+
+/pTop 483 def /pName (PC LOAD LETTER) def
+/pDesc { (Truthfulness: share of outputs printed on the paper size the job asked for. Parody of TruthfulQA.) fseg } def
+/pDir 0 def /pMax 100 def /pStep 20 def /pVal 100 def /pValS (100.0%) def /pSuf (%) def
+panel
+/pSuf () def
+
+/pTop 425 def /pName (Jam Rate) def
+/pDesc { (Hallucination metric. One jam = one invented object \(e.g. a quiet salad\), per 100 tokens.) fseg } def
+/pDir 1 def /pMax 4 def /pStep 1 def /pVal 1.5 def /pValS (1.5) def
+panel
+
+/pTop 367 def /pName (TonerBench) def
+/pDesc { ($ per 1M output tokens, in toner: 5,000 sheets at 200 tokens and about 2.5 cents each. Paper extra.) fseg } def
+/pDir 1 def /pMax 200 def /pStep 50 def /pVal 125 def /pValS ($125) def /pPre ($) def
+panel
+/pPre () def
+
+% ---- figure 2: scaling law ----
+54 324 290 (FIGURE 2   TEST-TIME SCALING) sechead
+% gridlines
+20 10 80 { /q exch def gx0 gx1 q pgy 0.3 0.8 hl } for
+[1 10 100 1000 10000] { pgx gy0 gy1 0.3 0.8 vl } forall
+% minor ticks on the x axis
+0 1 3 { /d exch def 2 1 9 { 10 d exp mul pgx gy0 gy0 1.8 add 0.4 0 vl } for } for
+% axes
+gx0 gx1 gy0 0.6 0 hl  gx0 gy0 gy1 0.6 0 vl
+% tick labels
+6.2 fH 0.3 setgray
+20 10 80 { /q exch def gx0 4 sub q pgy 2.2 sub moveto q cvi nstr cvs rsh } for
+[ [1 (1)] [10 (10)] [100 (100)] [1000 (1,000)] [10000 (10,000)] ]
+  { aload pop exch pgx gy0 9 sub moveto csh } forall
+0 setgray 6.6 fH
+gx0 gx1 add 2 div gy0 19.5 sub moveto (Pages printed, log scale) csh
+gx0 gy1 6.5 add moveto 6.6 fHB (Story quality, best of N pages) show
+0.4 setgray 6.6 fH ( \(parody units\)) show
+% 1 ream marker
+gsave [2 2] 0 setdash 500 pgx gy0 gy1 0.5 0.35 vl grestore
+5.8 fHO 0.25 setgray 500 pgx 3 add gy1 8 sub moveto (1 ream) show
+% TONER-1 fit (solid where observed, dashed where extrapolated)
+gsave 0.9 setlinewidth 0 setgray newpath 1 pgx 30 pgy moveto 500 pgx 30 9 500 log mul add pgy lineto stroke
+  [3 2] 0 setdash newpath 500 pgx 30 9 500 log mul add pgy moveto 10000 pgx 66 pgy lineto stroke grestore
+0 setgray
+[ [1 30.4] [2 32.1] [5 36.6] [10 38.9] [20 41.8] [50 44.7] [100 48.6] [200 50.2] [500 54.1] ]
+  { aload pop exch pgx exch pgy 1.9 dot } forall
+% TONER-1 Pro projection
+gsave 0.6 setlinewidth 0.35 setgray [1.2 1.6] 0 setdash newpath 1 pgx 48 pgy moveto 20 pgx 48 9 20 log mul add pgy lineto stroke grestore
+[ 1 2 5 10 20 ] { /n exch def n pgx 48 9 n log mul add pgy 2 odot } forall
+% direct labels
+6.4 fHB 0 setgray 700 pgx 30 9 700 log mul add pgy 10 sub moveto (TONER-1) show
+6.4 fH 0.3 setgray ( extrapolated) show
+6.4 fHB 0 setgray 20 pgx 6 add 48 9 20 log mul add pgy 3.5 add moveto (TONER-1 Pro) show
+6.4 fH 0.3 setgray ( projected) show
+/an1 (Fit: quality = 30 + 9 log) def /an2 (10) def /an3 (\(pages\). +2.7 points per doubling of paper.) def
+5.8 fHO /anw an1 stringwidth pop an3 stringwidth pop add def 4.4 fHO /anw anw an2 stringwidth pop add def
+gx1 9 sub anw sub gy0 5 add anw 6 add 8.4 1 rf
+0.25 setgray gx1 6 sub anw sub gy0 7.5 add moveto
+5.8 fHO an1 show 4.4 fHO 0 -1.6 rmoveto an2 show 0 1.6 rmoveto 5.8 fHO an3 show
+
+% ---- evaluation setup ----
+348 558 290 (EVALUATION SETUP) sechead
+/eY 285 def
+(Interpreter) { (Ghostscript 10.07, Apple-silicon Mac) fseg } erow
+(Printer) { (Office laser, PostScript emulation \(pending\)) fseg } erow
+(Speed) { (Measured in Ghostscript; printer estimated) fseg } erow
+(Paper) { (20 lb bond, US Letter, simplex) fseg } erow
+(Sampling) { (Temperature 0.8, seed 42, 200 steps) fseg } erow
+(Prompt) { (None. Every run starts from BOS.) fseg } erow
+(Ambient) { (Room temp.; fuser typically about 200 \200C) fseg } erow
+(Frontier models) { (Not run: no print-job support) fseg } erow
+/eY eY 13 sub def
+0 setgray 6.8 fHB 348 eY moveto (REPRODUCE) 1.2 tsh
+348 eY 23 sub 210 15.5 0.6 0 rs
+7.6 fC 0 setgray 356 eY 17.4 sub moveto (nc <printer-ip> 9100 < toner1.ps) show
+
+% ---- footnotes ----
+54 558 124 0.6 0 hl
+54 558 114 8.6 fl-begin 0 setgray 6.7 fHB
+(Parody benchmarks. Not real evaluations. TONER-1 speed measured in Ghostscript; printer speed estimated.) fseg
+6.7 fH 0.2 setgray
+(Frontier models from major labs were not run and are not named; N/A means only that they cannot execute inside a print job. Figure 2 is parody data. TONER-1 is Karpathy's llama2.c stories260K, exported to int8 and run by a PostScript forward pass. Prior art: int-llm-postscript \(Aug 2026\) ran a 14K-parameter microGPT in PostScript under Ghostscript, and PSChess played chess on real printers. TONER-1 is built to run on an actual printer; that run is pending. Only use printers you own or have permission to use.) fseg
+
+showpage
+end
+pgsave restore
+%%PageTrailer
+%%Trailer
+%%EOF

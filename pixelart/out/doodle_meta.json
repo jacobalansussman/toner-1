@@ -1,0 +1,427 @@
+{
+ "name": "TONER-1-V",
+ "checkpoint": "d48L4_16k",
+ "model": {
+  "arch": "llama2.c Transformer (RMSNorm eps 1e-5, RoPE theta 10000 on pairs (2i,2i+1) within each head, grouped-query attention, SwiGLU, tied embeddings, no biases)",
+  "dim": 48,
+  "hidden_dim": 128,
+  "n_layers": 4,
+  "n_heads": 6,
+  "n_kv_heads": 3,
+  "head_size": 8,
+  "kv_dim": 24,
+  "kv_mul": 2,
+  "vocab_size": 36,
+  "max_seq_len": 66,
+  "params": 103536,
+  "forward_passes_per_doodle": 65
+ },
+ "vocab": {
+  "BOS": 0,
+  "EOS": 1,
+  "EOS_note": "unused (sequences are fixed length)",
+  "patch_tokens": [
+   2,
+   17
+  ],
+  "class_tokens": {
+   "cat": 18,
+   "dog": 19,
+   "bird": 20,
+   "fish": 21,
+   "duck": 22,
+   "rabbit": 23,
+   "frog": 24,
+   "teddy-bear": 25,
+   "sun": 26,
+   "tree": 27,
+   "flower": 28,
+   "house": 29,
+   "car": 30,
+   "apple": 31,
+   "cake": 32,
+   "soccer ball": 33,
+   "light bulb": 34,
+   "calculator": 35
+  },
+  "map": [
+   "BOS",
+   "EOS",
+   "patch0",
+   "patch1",
+   "patch2",
+   "patch3",
+   "patch4",
+   "patch5",
+   "patch6",
+   "patch7",
+   "patch8",
+   "patch9",
+   "patch10",
+   "patch11",
+   "patch12",
+   "patch13",
+   "patch14",
+   "patch15",
+   "class:cat",
+   "class:dog",
+   "class:bird",
+   "class:fish",
+   "class:duck",
+   "class:rabbit",
+   "class:frog",
+   "class:teddy-bear",
+   "class:sun",
+   "class:tree",
+   "class:flower",
+   "class:house",
+   "class:car",
+   "class:apple",
+   "class:cake",
+   "class:soccer ball",
+   "class:light bulb",
+   "class:calculator"
+  ]
+ },
+ "classes": [
+  "cat",
+  "dog",
+  "bird",
+  "fish",
+  "duck",
+  "rabbit",
+  "frog",
+  "teddy-bear",
+  "sun",
+  "tree",
+  "flower",
+  "house",
+  "car",
+  "apple",
+  "cake",
+  "soccer ball",
+  "light bulb",
+  "calculator"
+ ],
+ "sequence": "BOS, CLASS, then 64 patch tokens (length 66)",
+ "sampling": {
+  "restrict_to": "patch tokens 2..17 (other tokens get small but nonzero probability)",
+  "recommended_temperature": 0.9,
+  "tested_temperatures": [
+   1.0,
+   0.9,
+   0.8
+  ],
+  "greedy_warning": "TEMP 0 (argmax) is degenerate: greedy 'apple' has 0 non-blank patches out of 64"
+ },
+ "image": {
+  "size": 16,
+  "patch": 2,
+  "grid": 8,
+  "patch_order": "raster over the 8x8 patch grid: token index i (0..63) is patch row i//8 (top first), column i%8 (left first)",
+  "patch_value": "v = 8*TL + 4*TR + 2*BL + 1*BR; token = 2 + v; bit 1 = ink (dark)",
+  "patch_bits_msb_first": [
+   "TL",
+   "TR",
+   "BL",
+   "BR"
+  ]
+ },
+ "preprocessing": {
+  "source": "Quick, Draw! numpy_bitmap 28x28 uint8, ink high on 0 background",
+  "downsample": "exact area-weighted box filter 28->16 (1.75 px per output pixel)",
+  "threshold": 96,
+  "threshold_on": "box-mean intensity 0..255, ink if >= threshold",
+  "dilation": false,
+  "drawings_per_class": 10000,
+  "val_frac": 0.05,
+  "train_sequences": 171000,
+  "val_sequences": 9000
+ },
+ "training": {
+  "device": "mps",
+  "steps": 16000,
+  "batch_size": 256,
+  "lr": 0.002,
+  "min_lr": 0.0001,
+  "warmup": 300,
+  "weight_decay": 0.1,
+  "optimizer": "AdamW betas (0.9, 0.95), grad clip 1.0, cosine",
+  "epochs": 23.953216374269005,
+  "train_seconds": 740.1669852733612,
+  "loss_note": "cross-entropy on the 64 patch targets only (class token is given)",
+  "val_nats_per_token_float": 0.867595926920573,
+  "val_bits_per_pixel_float": 0.31291908531594353,
+  "val_nats_per_token_int8": 0.8676549614800347,
+  "val_bits_per_pixel_int8": 0.31294037753248766,
+  "per_class_val_nats_per_token": {
+   "cat": 0.9977747201919556,
+   "dog": 0.9270245432853699,
+   "bird": 0.8896315693855286,
+   "fish": 0.669389009475708,
+   "duck": 0.8408507704734802,
+   "rabbit": 0.9623059630393982,
+   "frog": 1.019368290901184,
+   "teddy-bear": 1.067177653312683,
+   "sun": 1.0065639019012451,
+   "tree": 0.8404548764228821,
+   "flower": 0.8357194662094116,
+   "house": 0.6823705434799194,
+   "car": 0.7246577739715576,
+   "apple": 0.6261096000671387,
+   "cake": 0.9015145301818848,
+   "soccer ball": 1.1306461095809937,
+   "light bulb": 0.6507638096809387,
+   "calculator": 0.8444029092788696
+  },
+  "history": [
+   {
+    "step": 0,
+    "val_nats_per_token": 3.2376623153686523,
+    "val_bits_per_pixel": 1.1677398416138585,
+    "t": 1.6062710285186768
+   },
+   {
+    "step": 2000,
+    "val_nats_per_token": 0.9144806861877441,
+    "val_bits_per_pixel": 0.3298291877379487,
+    "t": 94.19265103340149
+   },
+   {
+    "step": 4000,
+    "val_nats_per_token": 0.8945946097373962,
+    "val_bits_per_pixel": 0.3226568017685348,
+    "t": 184.9942021369934
+   },
+   {
+    "step": 6000,
+    "val_nats_per_token": 0.8882738351821899,
+    "val_bits_per_pixel": 0.3203770642421915,
+    "t": 276.42004132270813
+   },
+   {
+    "step": 8000,
+    "val_nats_per_token": 0.8816208839416504,
+    "val_bits_per_pixel": 0.3179775193016909,
+    "t": 367.9815983772278
+   },
+   {
+    "step": 10000,
+    "val_nats_per_token": 0.8765184283256531,
+    "val_bits_per_pixel": 0.316137197448302,
+    "t": 459.14579916000366
+   },
+   {
+    "step": 12000,
+    "val_nats_per_token": 0.8724756836891174,
+    "val_bits_per_pixel": 0.3146790855386244,
+    "t": 550.1097462177277
+   },
+   {
+    "step": 14000,
+    "val_nats_per_token": 0.869308590888977,
+    "val_bits_per_pixel": 0.313536798269425,
+    "t": 643.2308900356293
+   },
+   {
+    "step": 16000,
+    "val_nats_per_token": 0.867595911026001,
+    "val_bits_per_pixel": 0.3129190795831885,
+    "t": 740.1669449806213
+   }
+  ]
+ },
+ "quantization": {
+  "scheme": "int8, one scale per row; scale = max|row|/127, byte = round(w/scale)+128 in 1..255, scales and RMSNorm weights printed with %.6g",
+  "relative_frobenius_error": {
+   "wq": 0.00532083486676351,
+   "wk": 0.005780948725410299,
+   "wv": 0.005988524322232486,
+   "wo": 0.005804509970432774,
+   "w1": 0.005723682296341454,
+   "w2": 0.006532608041018417,
+   "w3": 0.005695520808978793,
+   "emb": 0.0055868906716121615
+  }
+ },
+ "postscript": {
+  "file": "doodle_weights.ps",
+  "bytes": 238492,
+  "dictionary": "DOODLE",
+  "names_added_to_current_dict": [
+   "DOODLE"
+  ],
+  "packing": "same as toner1/export.py: matrices are [ [row scales] [row strings] ], bytes = int8+128",
+  "usage": "keep engine2.ps procedures in userdict; inside DOODLE begin ... end re-create the buffers x xb xb2 q (D), hb hb2 (HID), logits (V), att (SEQ), KC VC (NL x SEQ), isq, then call the same /forward; verified by src/check_ps.py mode B",
+  "keys": [
+   "D",
+   "HID",
+   "NL",
+   "NH",
+   "NKV",
+   "V",
+   "SEQ",
+   "HS",
+   "KVD",
+   "KVMUL",
+   "NPARAMS",
+   "EMB",
+   "WQ",
+   "WK",
+   "WV",
+   "WO",
+   "W1",
+   "W2",
+   "W3",
+   "RMSATT",
+   "RMSFFN",
+   "RMSF",
+   "BOS",
+   "EOS",
+   "PATCH0",
+   "NPATCHV",
+   "CLASS0",
+   "NCLASS",
+   "IMG",
+   "PATCH",
+   "GRID",
+   "NPATCH",
+   "CLASSES"
+  ]
+ },
+ "credits": [
+  "Quick, Draw! dataset by Google, CC BY 4.0",
+  "model.py from karpathy/llama2.c, MIT"
+ ],
+ "recognizability": {
+  "method": "small CNN trained on the real 16x16 training images classifies generated samples; accuracy on real validation images is the ceiling",
+  "real_val_ceiling": {
+   "real_val_accuracy": 0.8138889074325562,
+   "per_class": {
+    "cat": 0.6800000071525574,
+    "dog": 0.699999988079071,
+    "bird": 0.5180000066757202,
+    "fish": 0.8799999952316284,
+    "duck": 0.6019999980926514,
+    "rabbit": 0.7260000109672546,
+    "frog": 0.6119999885559082,
+    "teddy-bear": 0.8339999914169312,
+    "sun": 0.9459999799728394,
+    "tree": 0.9079999923706055,
+    "flower": 0.8659999966621399,
+    "house": 0.9300000071525574,
+    "car": 0.9200000166893005,
+    "apple": 0.9440000057220459,
+    "cake": 0.8460000157356262,
+    "soccer ball": 0.9139999747276306,
+    "light bulb": 0.871999979019165,
+    "calculator": 0.9520000219345093
+   }
+  },
+  "samples": {
+   "float_T1.0": {
+    "accuracy": 0.7647569179534912,
+    "per_class": {
+     "cat": 0.734375,
+     "dog": 0.59375,
+     "bird": 0.453125,
+     "fish": 0.734375,
+     "duck": 0.40625,
+     "rabbit": 0.609375,
+     "frog": 0.453125,
+     "teddy-bear": 0.828125,
+     "sun": 0.96875,
+     "tree": 0.890625,
+     "flower": 0.828125,
+     "house": 0.921875,
+     "car": 0.859375,
+     "apple": 0.96875,
+     "cake": 0.8125,
+     "soccer ball": 0.890625,
+     "light bulb": 0.859375,
+     "calculator": 0.953125
+    },
+    "n_per_class": 64
+   },
+   "float_T0.9": {
+    "accuracy": 0.7777777910232544,
+    "per_class": {
+     "cat": 0.734375,
+     "dog": 0.625,
+     "bird": 0.5,
+     "fish": 0.828125,
+     "duck": 0.515625,
+     "rabbit": 0.53125,
+     "frog": 0.453125,
+     "teddy-bear": 0.828125,
+     "sun": 0.953125,
+     "tree": 0.875,
+     "flower": 0.859375,
+     "house": 0.921875,
+     "car": 0.921875,
+     "apple": 0.9375,
+     "cake": 0.78125,
+     "soccer ball": 0.859375,
+     "light bulb": 0.90625,
+     "calculator": 0.96875
+    },
+    "n_per_class": 64
+   },
+   "int8_T0.9": {
+    "accuracy": 0.7708333134651184,
+    "per_class": {
+     "cat": 0.75,
+     "dog": 0.609375,
+     "bird": 0.46875,
+     "fish": 0.828125,
+     "duck": 0.484375,
+     "rabbit": 0.578125,
+     "frog": 0.421875,
+     "teddy-bear": 0.796875,
+     "sun": 0.9375,
+     "tree": 0.890625,
+     "flower": 0.859375,
+     "house": 0.921875,
+     "car": 0.9375,
+     "apple": 0.9375,
+     "cake": 0.78125,
+     "soccer ball": 0.8125,
+     "light bulb": 0.890625,
+     "calculator": 0.96875
+    },
+    "n_per_class": 64
+   },
+   "float_T0.8": {
+    "accuracy": 0.7734375,
+    "per_class": {
+     "cat": 0.609375,
+     "dog": 0.640625,
+     "bird": 0.515625,
+     "fish": 0.84375,
+     "duck": 0.578125,
+     "rabbit": 0.5625,
+     "frog": 0.421875,
+     "teddy-bear": 0.84375,
+     "sun": 0.921875,
+     "tree": 0.84375,
+     "flower": 0.84375,
+     "house": 0.953125,
+     "car": 0.953125,
+     "apple": 0.90625,
+     "cake": 0.75,
+     "soccer ball": 0.890625,
+     "light bulb": 0.90625,
+     "calculator": 0.9375
+    },
+    "n_per_class": 64
+   }
+  }
+ },
+ "contact_sheets": [
+  "samples_d48L4_16k_int8_t08.png",
+  "samples_d48L4_16k_int8_t09.png",
+  "samples_d48L4_16k_int8_t10.png",
+  "samples_d48L4_16k_t08.png",
+  "samples_d48L4_16k_t10.png"
+ ]
+}

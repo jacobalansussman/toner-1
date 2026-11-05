@@ -1,0 +1,119 @@
+{
+ "name": "d48L4_16k",
+ "params": 103536,
+ "args": {
+  "root": "pixelart",
+  "name": "d48L4_16k",
+  "dim": 48,
+  "layers": 4,
+  "heads": 6,
+  "kv": 3,
+  "hidden": 128,
+  "steps": 16000,
+  "bs": 256,
+  "lr": 0.002,
+  "min_lr": 0.0001,
+  "warmup": 300,
+  "wd": 0.1,
+  "dropout": 0.0,
+  "eval_every": 2000,
+  "seed": 0,
+  "no_compile": false,
+  "device": null
+ },
+ "model_args": {
+  "dim": 48,
+  "n_layers": 4,
+  "n_heads": 6,
+  "n_kv_heads": 3,
+  "vocab_size": 36,
+  "hidden_dim": 128,
+  "multiple_of": 1,
+  "norm_eps": 1e-05,
+  "max_seq_len": 66,
+  "dropout": 0.0
+ },
+ "device": "mps",
+ "train_seconds": 740.1669852733612,
+ "history": [
+  {
+   "step": 0,
+   "val_nats_per_token": 3.2376623153686523,
+   "val_bits_per_pixel": 1.1677398416138585,
+   "t": 1.6062710285186768
+  },
+  {
+   "step": 2000,
+   "val_nats_per_token": 0.9144806861877441,
+   "val_bits_per_pixel": 0.3298291877379487,
+   "t": 94.19265103340149
+  },
+  {
+   "step": 4000,
+   "val_nats_per_token": 0.8945946097373962,
+   "val_bits_per_pixel": 0.3226568017685348,
+   "t": 184.9942021369934
+  },
+  {
+   "step": 6000,
+   "val_nats_per_token": 0.8882738351821899,
+   "val_bits_per_pixel": 0.3203770642421915,
+   "t": 276.42004132270813
+  },
+  {
+   "step": 8000,
+   "val_nats_per_token": 0.8816208839416504,
+   "val_bits_per_pixel": 0.3179775193016909,
+   "t": 367.9815983772278
+  },
+  {
+   "step": 10000,
+   "val_nats_per_token": 0.8765184283256531,
+   "val_bits_per_pixel": 0.316137197448302,
+   "t": 459.14579916000366
+  },
+  {
+   "step": 12000,
+   "val_nats_per_token": 0.8724756836891174,
+   "val_bits_per_pixel": 0.3146790855386244,
+   "t": 550.1097462177277
+  },
+  {
+   "step": 14000,
+   "val_nats_per_token": 0.869308590888977,
+   "val_bits_per_pixel": 0.313536798269425,
+   "t": 643.2308900356293
+  },
+  {
+   "step": 16000,
+   "val_nats_per_token": 0.867595911026001,
+   "val_bits_per_pixel": 0.3129190795831885,
+   "t": 740.1669449806213
+  }
+ ],
+ "final_val_nats_per_token": 0.867595911026001,
+ "final_val_bits_per_pixel": 0.3129190795831885,
+ "per_class_val_nats_per_token": {
+  "cat": 0.9977747201919556,
+  "dog": 0.9270245432853699,
+  "bird": 0.8896315693855286,
+  "fish": 0.669389009475708,
+  "duck": 0.8408507704734802,
+  "rabbit": 0.9623059630393982,
+  "frog": 1.019368290901184,
+  "teddy-bear": 1.067177653312683,
+  "sun": 1.0065639019012451,
+  "tree": 0.8404548764228821,
+  "flower": 0.8357194662094116,
+  "house": 0.6823705434799194,
+  "car": 0.7246577739715576,
+  "apple": 0.6261096000671387,
+  "cake": 0.9015145301818848,
+  "soccer ball": 1.1306461095809937,
+  "light bulb": 0.6507638096809387,
+  "calculator": 0.8444029092788696
+ },
+ "train_sequences": 171000,
+ "val_sequences": 9000,
+ "epochs": 23.953216374269005
+}
