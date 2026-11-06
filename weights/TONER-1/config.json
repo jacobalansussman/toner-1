@@ -1,0 +1,26 @@
+{
+  "model_name": "TONER-1",
+  "architecture": "llama2.c Transformer (Llama-2-style decoder: RMSNorm, RoPE, grouped-query attention, SwiGLU feed-forward, tied input/output embedding)",
+  "code": "https://github.com/karpathy/llama2.c/blob/master/model.py",
+  "model_args": {
+    "dim": 64,
+    "n_layers": 5,
+    "n_heads": 8,
+    "n_kv_heads": 4,
+    "vocab_size": 512,
+    "hidden_dim": 172,
+    "multiple_of": 1,
+    "norm_eps": 1e-05,
+    "max_seq_len": 512,
+    "dropout": 0.0
+  },
+  "head_dim": 8,
+  "rope_theta": 10000.0,
+  "tie_word_embeddings": true,
+  "n_params": 260032,
+  "torch_dtype": "float32",
+  "tokenizer": "tok512: Karpathy's 512-token SentencePiece vocabulary from karpathy/tinyllamas (tok512.bin in llama2.c format)",
+  "bos_token_id": 1,
+  "eos_token_id": 2,
+  "weights": "model.safetensors holds the float32 weights. output.weight is not stored: it is tok_embeddings.weight (load with strict=False). The print job runs an int8 copy, one scale per row, written by export.py."
+}

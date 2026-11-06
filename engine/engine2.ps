@@ -134,7 +134,7 @@ usertime /t0 exch def
 {
   token npos forward
   /next sample def
-  next 1 eq { /eos true def exit } if
+  next 1 eq next 2 eq or { /eos true def exit } if  % BOS (next story) or EOS </s> ends the story
   /piece VOCAB next get def
   token 1 eq piece length 0 gt and { piece 0 get 32 eq { /piece piece 1 piece length 1 sub getinterval def } if } if
   piece print flush piece append  ntok 1024 lt { TOKS ntok next put } if
@@ -178,7 +178,7 @@ PAGE {
     } loop wy } bind def
 
   /PRO NPARAMS 1000000 gt def
-  /MODELNAME PRO { (stories15M) } { (stories260K) } ifelse def
+  /MODELNAME where { pop } { /MODELNAME PRO { (stories15M) } { (stories260K) } ifelse def } ifelse  % a job may name its own model
   /dot ( \264 ) def
 
   % ---- smart quotes (typesetting only; the words are untouched) ----

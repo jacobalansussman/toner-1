@@ -1,0 +1,163 @@
+--- llama2.c-350e04f/train.py
++++ training/llama2c/train.py
+@@ -71,6 +71,11 @@
+ device = "cuda"  # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1' etc., or try 'mps' on macbooks
+ dtype = "bfloat16"  # float32|bfloat16|float16
+ compile = True  # use PyTorch 2.0 to compile the model to be faster
++# TONER-1 Pro additions
++max_wall_seconds = 0  # if > 0: save ckpt.pt and exit after this many seconds (resumable chunks)
++min_lr_frac = 0.0  # min_lr = learning_rate * min_lr_frac (llama2.c hardcodes 0.0)
++fused_adamw = False  # use torch fused AdamW (also on MPS)
++export_bin = True  # write model.bin (llama2.c v0) on each new best; off for TONER-1 Pro training (memory)
+ # -----------------------------------------------------------------------------
+ config_keys = [
+     k
+@@ -83,7 +88,7 @@
+ 
+ # fixing some hyperparams to sensible defaults
+ lr_decay_iters = max_iters  # should be ~= max_iters per Chinchilla
+-min_lr = 0.0  # minimum learning rate, should be ~= learning_rate/10 per Chinchilla
++min_lr = learning_rate * min_lr_frac  # minimum learning rate, should be ~= learning_rate/10 per Chinchilla
+ 
+ # validating checks
+ assert vocab_source in ["llama2", "custom"]
+@@ -119,12 +124,13 @@
+ torch.manual_seed(1337 + seed_offset)
+ torch.backends.cuda.matmul.allow_tf32 = True  # allow tf32 on matmul
+ torch.backends.cudnn.allow_tf32 = True  # allow tf32 on cudnn
+-device_type = "cuda" if "cuda" in device else "cpu"  # for later use in torch.autocast
++device_type = "cuda" if "cuda" in device else ("mps" if "mps" in device else "cpu")  # for later use in torch.autocast
++assert not (device_type == "mps" and dtype == "float16"), "use bfloat16 or float32 on MPS"
+ # note: float16 data type will automatically use a GradScaler
+ ptdtype = {"float32": torch.float32, "bfloat16": torch.bfloat16, "float16": torch.float16}[dtype]
+ ctx = (
+     nullcontext()
+-    if device_type == "cpu"
++    if device_type == "cpu" or dtype == "float32"
+     else torch.amp.autocast(device_type=device_type, dtype=ptdtype)
+ )
+ 
+@@ -142,6 +148,7 @@
+ # init these up here, can override if init_from='resume' (i.e. from a checkpoint)
+ iter_num = 0
+ best_val_loss = 1e9
++train_seconds = 0.0  # cumulative wall-clock seconds in the training loop, across resumed chunks
+ 
+ # model init
+ model_args = dict(
+@@ -155,6 +162,7 @@
+     dropout=dropout,
+ )  # start with model_args from command line
+ if init_from == "scratch":
++    assert not os.path.exists(os.path.join(out_dir, "ckpt.pt")), f"{out_dir}/ckpt.pt exists: use --init_from=resume"  # TONER-1 Pro guard
+     # init a new model from scratch
+     print("Initializing a new model from scratch")
+     gptconf = ModelArgs(**model_args)
+@@ -182,13 +190,14 @@
+     model.load_state_dict(state_dict)
+     iter_num = checkpoint["iter_num"]
+     best_val_loss = checkpoint["best_val_loss"]
++    train_seconds = checkpoint.get("train_seconds", 0.0)
+ model.to(device)
+ 
+ # initialize a GradScaler. If enabled=False scaler is a no-op
+ scaler = torch.cuda.amp.GradScaler(enabled=(dtype == "float16"))
+ 
+ # optimizer
+-optimizer = model.configure_optimizers(weight_decay, learning_rate, (beta1, beta2), device_type)
++optimizer = model.configure_optimizers(weight_decay, learning_rate, (beta1, beta2), "cuda" if fused_adamw else device_type)
+ if init_from == "resume" and "optimizer" in checkpoint:
+     optimizer.load_state_dict(checkpoint["optimizer"])
+ checkpoint = None  # free up memory
+@@ -244,8 +253,29 @@
+     import wandb
+     wandb.init(project=wandb_project, name=wandb_run_name, config=config)
+ 
++# TONER-1 Pro: atomic checkpoint writer (latest = ckpt.pt for resume, best = best.pt)
++def save_checkpoint(name, **extra):
++    ck = {
++        "model": raw_model.state_dict(),
++        "optimizer": optimizer.state_dict(),
++        "model_args": model_args,
++        "iter_num": iter_num,
++        "best_val_loss": best_val_loss,
++        "config": config,
++        "train_seconds": train_seconds + time.time() - chunk_t0,
++        "tokens_seen": iter_num * tokens_per_iter,
++        "saved_at": datetime.now().isoformat(timespec="seconds"),
++    }
++    ck.update(extra)
++    tmp = os.path.join(out_dir, name + ".tmp")
++    torch.save(ck, tmp)
++    os.replace(tmp, os.path.join(out_dir, name))
++    print(f"saved {name} at iter {iter_num} (train_seconds {ck['train_seconds']:.0f})", flush=True)
++
+ # training loop
+-train_batch_iter = iter_batches(split="train")
++proc_t0 = time.time()
++chunk_t0 = time.time()
++train_batch_iter = iter_batches(split="train", skip_samples=iter_num * gradient_accumulation_steps * batch_size)  # TONER-1 Pro: exact data resume
+ X, Y = next(train_batch_iter)  # fetch the very first batch
+ t0 = time.time()
+ local_iter_num = 0  # number of iterations in the lifetime of this process
+@@ -260,7 +290,7 @@
+     # evaluate the loss on train/val sets and write checkpoints
+     if iter_num % eval_interval == 0 and master_process:
+         losses = estimate_loss()
+-        print(f"step {iter_num}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
++        print(f"step {iter_num}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}", flush=True)
+         if wandb_log:
+             try:
+                 wandb.log(
+@@ -275,20 +305,17 @@
+                 )
+             except Exception as e:
+                 print(f"logging to wandb failed: {e}")
+-        if losses["val"] < best_val_loss or always_save_checkpoint:
++        improved = losses["val"] < best_val_loss
++        if improved:
+             best_val_loss = losses["val"]
+-            if iter_num > 0:
+-                checkpoint = {
+-                    "model": raw_model.state_dict(),
+-                    "optimizer": optimizer.state_dict(),
+-                    "model_args": model_args,
+-                    "iter_num": iter_num,
+-                    "best_val_loss": best_val_loss,
+-                    "config": config,
+-                }
+-                print(f"saving checkpoint to {out_dir}")
+-                torch.save(checkpoint, os.path.join(out_dir, "ckpt.pt"))
+-                model_export(raw_model, os.path.join(out_dir, "model.bin"), version=0)
++        with open(os.path.join(out_dir, "evals.tsv"), "a") as ef:
++            ef.write(f"{iter_num}\t{iter_num * tokens_per_iter}\t{losses['train']:.4f}\t{losses['val']:.4f}\t{lr:.3e}\t{train_seconds + time.time() - chunk_t0:.0f}\t{datetime.now().isoformat(timespec='seconds')}\n")
++        if iter_num > 0:
++            save_checkpoint("ckpt.pt", val_loss=float(losses["val"]), train_loss=float(losses["train"]))
++            if improved or always_save_checkpoint:
++                save_checkpoint("best.pt", val_loss=float(losses["val"]), train_loss=float(losses["train"]))
++                if export_bin:
++                    model_export(raw_model, os.path.join(out_dir, "model.bin"), version=0)
+     if iter_num == 0 and eval_only:
+         break
+ 
+@@ -330,14 +357,19 @@
+             mfu = raw_model.estimate_mfu(batch_size * gradient_accumulation_steps, dt)
+             running_mfu = mfu if running_mfu == -1.0 else 0.9 * running_mfu + 0.1 * mfu
+         print(
+-            f"{iter_num} | loss {lossf:.4f} | lr {lr:e} | {dt*1000:.2f}ms | mfu {running_mfu*100:.2f}%"
++            f"{iter_num} | loss {lossf:.4f} | lr {lr:e} | {dt*1000:.2f}ms | {tokens_per_iter/dt:.0f} tok/s", flush=True
+         )
+     iter_num += 1
+     local_iter_num += 1
+ 
+     # termination conditions
+     if iter_num > max_iters:
++        save_checkpoint("ckpt.pt")
+         break
++    if max_wall_seconds > 0 and time.time() - proc_t0 > max_wall_seconds and master_process:
++        print(f"max_wall_seconds {max_wall_seconds} reached, stopping chunk", flush=True)
++        save_checkpoint("ckpt.pt")
++        break
+ 
+ if ddp:
+     destroy_process_group()

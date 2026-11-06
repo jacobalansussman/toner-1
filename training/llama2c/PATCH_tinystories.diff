@@ -1,0 +1,76 @@
+--- llama2.c-350e04f/tinystories.py
++++ training/llama2c/tinystories.py
+@@ -12,15 +12,21 @@
+ from functools import partial
+ 
+ import numpy as np
+-import requests
++try:
++    import requests  # only needed by download(), unused for TONER-1 Pro
++except ImportError:
++    requests = None
+ import sentencepiece as spm
+ import torch
+ import torch.distributed as dist
+-from tqdm import tqdm
++try:
++    from tqdm import tqdm
++except ImportError:
++    tqdm = lambda x, **k: x
+ 
+-from tokenizer import Tokenizer
++# TONER-1 Pro: tokenizer.py (Meta / Llama 2 license header) is not used; pretokenization is in scripts/pro_pretokenize.py
+ 
+-DATA_CACHE_DIR = "data"
++DATA_CACHE_DIR = os.path.join(os.environ.get("TONER_TRAIN", "work"), "data")  # TONER-1 Pro: the work directory (training/scripts/paths.py)
+ 
+ def download_file(url: str, fname: str, chunk_size=1024):
+     """Helper function to download a file from a given url"""
+@@ -175,8 +181,9 @@
+ class PretokDataset(torch.utils.data.IterableDataset):
+     """Loads pretokenized examples from disk and yields them as PyTorch tensors."""
+ 
+-    def __init__(self, split, max_seq_len, vocab_size, vocab_source):
++    def __init__(self, split, max_seq_len, vocab_size, vocab_source, skip_samples=0):
+         super().__init__()
++        self.skip_samples = skip_samples  # TONER-1 Pro: resume the exact data stream after this many samples
+         self.split = split
+         self.max_seq_len = max_seq_len
+         self.vocab_size = vocab_size
+@@ -203,6 +210,9 @@
+         # train/test split. let's use only shard 0 for test split, rest train
+         shard_filenames = shard_filenames[1:] if self.split == "train" else shard_filenames[:1]
+         assert len(shard_filenames)>0, f"No bin files found in {bin_dir}"
++        skip = self.skip_samples
++        if skip:
++            print(f"PretokDataset {self.split}: skipping {skip} samples already used")
+         while True:
+             rng.shuffle(shard_filenames)
+             for shard in shard_filenames:
+@@ -213,6 +223,10 @@
+                 assert num_batches > 0, "this shard is way too small? investigate."
+                 ixs = list(range(num_batches))
+                 rng.shuffle(ixs)
++                if skip >= len(ixs):  # TONER-1 Pro: whole shard already consumed (rng state still advanced)
++                    skip -= len(ixs)
++                    continue
++                ixs, skip = ixs[skip:], 0
+                 for ix in ixs:
+                     start = ix * self.max_seq_len
+                     end = start + self.max_seq_len + 1
+@@ -242,11 +256,12 @@
+     def iter_batches(batch_size, device, num_workers=0, **dataset_kwargs):
+         ds = PretokDataset(**dataset_kwargs)
+         dl = torch.utils.data.DataLoader(
+-            ds, batch_size=batch_size, pin_memory=True, num_workers=num_workers
++            ds, batch_size=batch_size, pin_memory=("cuda" in str(device)), num_workers=num_workers
+         )
++        nb = "cuda" in str(device)  # TONER-1 Pro: non_blocking host->MPS copies return corrupted batches (torch 2.8)
+         for x, y in dl:
+-            x = x.to(device, non_blocking=True)
+-            y = y.to(device, non_blocking=True)
++            x = x.to(device, non_blocking=nb)
++            y = y.to(device, non_blocking=nb)
+             yield x, y
+ 
+ # -----------------------------------------------------------------------------

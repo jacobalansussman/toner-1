@@ -255,7 +255,7 @@ TN begin
 % ---- specification table ----
 54 384 545 (SPECIFICATIONS) sechead
 /rowY 540 def
-(Base model) { (Karpathy's llama2.c stories260K, trained on TinyStories) fseg } spec
+(Base model) { (Karpathy's llama2.c stories260K \(trained on TinyStories\), fine-tuned by us on 8,757 printer stories written by Xing4.0-29B-A4B \(Apache-2.0\)) fseg } spec
 (Parameters) { (260,032) fseg } spec
 (Architecture) { (Llama-2 decoder: 5 layers, dim 64, 8 query heads / 4 KV heads, head size 8, SwiGLU FFN \(hidden 172\), RoPE, RMSNorm) fseg } spec
 (Vocabulary) { (512-token SentencePiece) fseg } spec
@@ -263,7 +263,7 @@ TN begin
 (Context window) { (8.5 \201 11 in. \(512 tokens\)) fseg } spec
 (KV cache) { (Persistent, archival, recyclable) fseg } spec
 (Job size) { (595 KB, one file:) fseg 8 fC (toner1.ps) fseg 8.2 fH fjoin (. Weights, vocabulary, a forward pass of about 100 lines and its own page layout) fseg } spec
-(Speed, measured) { (About 55 tok/s in Ghostscript 10.07 on an Apple-silicon Mac, in about 3.5 MB of PostScript VM) fseg } spec
+(Speed, measured) { (About 80 tok/s in Ghostscript 10.07 on an Apple-silicon Mac, in about 3.5 MB of PostScript VM) fseg } spec
 (Speed, printer) { (0.3 to 5 tok/s, estimated, not yet measured. A 200-token page takes roughly 1 to 10 minutes) fseg } spec
 (Time to first token) { (Includes fuser warm-up) fseg } spec
 (Accelerator) { (The office's hottest inference chip \(fuser, typically about 200 \200C\)) fseg } spec
@@ -275,11 +275,11 @@ TN begin
 % ---- right column ----
 /curY 545 def
 (INTENDED USE) chead
-{ (Writing short children's stories, one US Letter sheet at a time, on a printer you own or have permission to use. Demonstrating that a print job is a program.) fseg 9 fTI (Out of scope: prompts. The model chooses the plot.) fseg } cpara
+{ (Writing short children's stories, mostly about printers, one US Letter sheet at a time, on a printer you own or have permission to use. Demonstrating that a print job is a program.) fseg 9 fTI (Out of scope: prompts. The model chooses the plot.) fseg } cpara
 /curY curY 9 sub def
 (LIMITATIONS) chead
 { (It is 260K parameters.) fseg } citem
-{ (It mostly writes about Lily and Tim.) fseg } citem
+{ (It mostly writes about Lily, Tim and the printer.) fseg } citem
 { (It will hallucinate a quiet salad.) fseg } citem
 { (No prompt input: every story starts from the beginning-of-sequence token.) fseg } citem
 { (Needs a PostScript interpreter, Level 2 or later. PCL- or GDI-only printers may print the file as text.) fseg } citem
@@ -293,10 +293,10 @@ TN begin
 
 % ---- product lineup ----
 54 558 186 (PRODUCT LINEUP) sechead
-54 (TONER-1) (AVAILABLE) true (STORIES260K  /  595 KB JOB)
-  { (The everyday copy-room model. Under 4\240s per page in Ghostscript; an estimated 1\240to\24010\240minutes on a real printer.) fseg } lbox
-228 (TONER-1 Pro) (EST. OVERNIGHT) false (STORIES15M  /  31.6 MB JOB)
-  { (Same print job, about 58 times the parameters. Estimated: send it at close of business, collect your story in the morning.) fseg } lbox
+54 (TONER-1) (AVAILABLE) true (260K, PRINTER-TUNED  /  595 KB JOB)
+  { (The everyday copy-room model, now fine-tuned on printer stories. Under 4\240s per page in Ghostscript; an estimated 1\240to\24010\240minutes on a printer.) fseg } lbox
+228 (TONER-1 Pro) (EST. 20 MIN\2615 H) false (12.2M, OURS  /  24.9 MB JOB)
+  { (Trained from scratch by us, 47 times the parameters. Estimated: send it after lunch, collect your story by close of business.) fseg } lbox
 402 (TONER-1 Classic) (PLANNED) false (1985 LASERWRITER  /  68000)
   { (A 1985-native AI PC. The LaserWriter's 12\240MHz 68000 was faster than the 7.8\240MHz Macintosh it was plugged into.) fseg } lbox
 
@@ -325,9 +325,9 @@ TN begin
 /lgx 558 (Frontier models from major labs) stringwidth pop sub 15 sub def
 lgx 605.4 11 6.4 hatchbox
 0 setgray lgx 15 add 607 moveto (Frontier models from major labs) show
-/lgx2 lgx 22 sub (TONER-1 \(stories260K, int8\)) stringwidth pop sub 15 sub def
+/lgx2 lgx 22 sub (TONER-1 \(stories260K printer-tuned, int8\)) stringwidth pop sub 15 sub def
 lgx2 605.4 11 6.4 0.12 rf
-0 setgray lgx2 15 add 607 moveto (TONER-1 \(stories260K, int8\)) show
+0 setgray lgx2 15 add 607 moveto (TONER-1 \(stories260K printer-tuned, int8\)) show
 
 % ---- the five panels ----
 /pPre () def /pSuf () def /pExtra {} def
@@ -425,7 +425,7 @@ gx1 9 sub anw sub gy0 5 add anw 6 add 8.4 1 rf
 54 558 114 8.6 fl-begin 0 setgray 6.7 fHB
 (Parody benchmarks. Not real evaluations. TONER-1 speed measured in Ghostscript; printer speed estimated.) fseg
 6.7 fH 0.2 setgray
-(Frontier models from major labs were not run and are not named; N/A means only that they cannot execute inside a print job. Figure 2 is parody data. TONER-1 is Karpathy's llama2.c stories260K, exported to int8 and run by a PostScript forward pass. Prior art: int-llm-postscript \(Aug 2026\) ran a 14K-parameter microGPT in PostScript under Ghostscript, and PSChess played chess on real printers. TONER-1 is built to run on an actual printer; that run is pending. Only use printers you own or have permission to use.) fseg
+(Frontier models from major labs were not run on these benchmarks and are not named; N/A means only that they cannot execute inside a print job. Figure 2 is parody data. TONER-1 is Karpathy's llama2.c stories260K, fine-tuned by us on printer stories, exported to int8 and run by a PostScript forward pass. TONER-1 Pro is a 12.2M-parameter model we trained from scratch, with our own 4,096-token tokenizer. Prior art: int-llm-postscript \(Aug 2026\) ran a 14K-parameter microGPT in PostScript under Ghostscript, and PSChess played chess on real printers. TONER-1 is built to run on an actual printer; that run is pending. Only use printers you own or have permission to use.) fseg
 
 showpage
 end

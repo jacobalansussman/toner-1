@@ -1,0 +1,48 @@
+{
+ "what": "TONER-1 Pro printer fine-tune, run 2 (shipped), as saved in its checkpoint (cfg). The first chunk (iters 1 to 200) ran with --max_iters=900, which sets the cosine schedule; every later chunk used 750, the value below.",
+ "command": "python -I -u training/scripts/pro_ft_train.py --out_dir=$TONER_TRAIN/ckpt/pro_ft/run_ft2_tag --lr=1e-4 --min_lr=5e-6 --warmup=50 --max_iters=750 --eval_interval=50 --max_wall_seconds=470 --replay_bos=2   (repeat until it reaches iter 750; it resumes from ckpt.pt)",
+ "result": {
+  "iter": 750,
+  "tokens_seen": 12288000,
+  "printer_tokens_seen": 6144000,
+  "printer_val": 1.9542,
+  "ts_val": 1.524,
+  "train_seconds": 1467
+ },
+ "cfg": {
+  "out_dir": "TT/ckpt/pro_ft/run_ft2_tag",
+  "init": "TT/ckpt/pro/pretrain.pt",
+  "opt_init": "",
+  "seed": 20261105,
+  "bp": 8,
+  "bt": 8,
+  "seq": 256,
+  "accum": 4,
+  "lr": 0.0001,
+  "min_lr": 5e-06,
+  "warmup": 50,
+  "max_iters": 750,
+  "weight_decay": 0.1,
+  "beta1": 0.9,
+  "beta2": 0.95,
+  "grad_clip": 1.0,
+  "eval_interval": 50,
+  "ts_eval_windows": 640,
+  "ptrain_eval_windows": 160,
+  "eval_bs": 32,
+  "max_wall_seconds": 470,
+  "device": "mps",
+  "log_interval": 10,
+  "replay_bos": 2
+ },
+ "model_args": {
+  "dim": 384,
+  "n_layers": 6,
+  "n_heads": 6,
+  "n_kv_heads": 6,
+  "vocab_size": 4096,
+  "multiple_of": 32,
+  "max_seq_len": 256,
+  "dropout": 0.0
+ }
+}

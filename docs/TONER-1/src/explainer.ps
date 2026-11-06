@@ -194,7 +194,7 @@ pghead
 /HB 25 F LM 674 moveto (How a print job runs a language model) show
 
 /wfR /TR def /wsz 12 def /wld 15.6 def
-(TONER-1 is the most capable language model ever to run entirely inside a print job.* It is one 595~KB PostScript file. Send it to a laser printer and the printer's own processor writes a short story, then prints it. The computer that sent it does no math.)
+(TONER-1 is the most capable language model ever to run entirely inside a print job.* It is one 595~KB PostScript file. Send it to a laser printer and the printer's own processor writes a short story, usually about a printer, then prints it. The computer that sent it does no math.)
 LM 649 470 wrap
 /p1y wy def
 
@@ -306,7 +306,7 @@ ppx ppy ppw pph paper
 LM RM STT 1 hline
 [ (260,032) () (parameters) (int8, one scale per row)
   (595) (KB) (the entire print job) (weights + vocab + program)
-  (55) (tok/s) (in Ghostscript 10.07) (Apple-silicon Mac, measured)
+  (80) (tok/s) (in Ghostscript 10.07) (Apple-silicon Mac, measured)
   (0.3\2615) (tok/s) (on a real printer) (estimated, not yet measured)
   (0) (FLOPs) (on the host) (the laptop only sends bytes)
 ] /st exch def
@@ -325,7 +325,7 @@ LM RM STT 1 hline
 % ---------- footer ----------
 (Page 1 of 2) pgfoot
 /wfR /TI def /wsz 6.8 def /wld 8.4 def /wgray 0.35 def
-(* Among int8, 260,032-parameter, English-language, children's-story models executed by a PostScript interpreter, as of this printing. Ghostscript counts as a printer for the purposes of this footnote. Model: Karpathy's llama2.c stories260K, trained on TinyStories. Not affiliated with or endorsed by Adobe, HP, Artifex, Google, or any AI lab.)
+(* Among int8, 260,032-parameter, English-language, children's-story models executed by a PostScript interpreter, as of this printing. Ghostscript counts as a printer for the purposes of this footnote. Model: Karpathy's llama2.c stories260K, trained on TinyStories, then fine-tuned by us on 8,757 printer stories written by Xing4.0-29B-A4B (Apache-2.0). Not affiliated with or endorsed by Adobe, HP, Artifex, Google, or any AI lab.)
 LM 64 420 wrap
 /wgray 0 def
 pgsave restore
@@ -342,10 +342,10 @@ pghead
 
 % ---------- anatomy bar ----------
 /abh 8 def /aby 638 def
-[ 72807 0.3 (Embedding) (73 KB)  136459 0.55 (Attention) (136 KB)  358707 0.82 (Feed-forward) (359 KB)
-  9582 0.12 (Norms, vocab) (9.6 KB)  17622 0 (Program) (17.6 KB) ] /ab exch def
-/abT 595177 def
-0.4 setgray /H 6.5 F LM aby abh add 5 add moveto (BYTES IN TONER1.PS BY PURPOSE: 595,177 TOTAL, 454 LINES OF PLAIN TEXT) 0.6 tshow 0 setgray
+[ 72806 0.3 (Embedding) (73 KB)  136465 0.55 (Attention) (136 KB)  358734 0.82 (Feed-forward) (359 KB)
+  9574 0.12 (Norms, vocab) (9.6 KB)  17793 0 (Program) (17.8 KB) ] /ab exch def
+/abT 595372 def
+0.4 setgray /H 6.5 F LM aby abh add 5 add moveto (BYTES IN TONER1.PS BY PURPOSE: 595,372 TOTAL, 455 LINES OF PLAIN TEXT) 0.6 tshow 0 setgray
 /abx LM def
 0.4 setlinewidth
 0 4 ab length 1 sub { /k exch def
@@ -356,14 +356,14 @@ pghead
     /HB 6.5 F abx 3 add aby 9 sub moveto ab k 2 add get show
     0.4 setgray /H 6.5 F ( ) show ab k 3 add get show 0 setgray } if
   /abx abx aw add def } for
-/sl1 RM 17622 abT div CW mul sub 9582 abT div CW mul sub def
-/sl2 RM 17622 abT div CW mul 2 div sub def
+/sl1 RM 17793 abT div CW mul sub 9574 abT div CW mul sub def
+/sl2 RM 17793 abT div CW mul 2 div sub def
 newpath sl1 aby moveto 0 -11 rlineto stroke
 /HB 6.5 F sl1 3 sub aby 9 sub moveto (Norms + vocab) dup sw /t1 exch def
 0.4 setgray /H 6.5 F (  9.6 KB) dup sw t1 add neg 0 rmoveto exch 0 setgray /HB 6.5 F show 0.4 setgray /H 6.5 F show 0 setgray
 newpath sl2 aby abh add moveto 0 5 rlineto stroke
 /HB 6.5 F sl2 3 sub aby abh add 5 add moveto
-(The program: 17.6 KB, about 3%) dup sw neg 0 rmoveto show
+(The program: 17.8 KB, about 3%) dup sw neg 0 rmoveto show
 
 % ---------- annotated excerpts ----------
 /csz 6.6 def /cld 7.9 def
@@ -401,49 +401,49 @@ xrow
   /dy cyy cld add csz 0.23 mul sub 4 sub def
   1 setgray 0.6 setlinewidth newpath cx 1.6 add dy moveto cx cw add dy lineto stroke
   /cch csz 0.6 mul def
-  [ (row 0 bytes) [(92) (a1) (7c) (88)] (minus 128) [(18) (33) (-4) (8)] (\327 0.00241668) [(0.0435) (0.0798) (-0.0097) (0.0193)] ] /dt exch def
+  [ (row 0 bytes) [(96) (91) (7e) (84)] (minus 128) [(22) (17) (-2) (4)] (\327 0.00261005) [(0.0574) (0.0444) (-0.0052) (0.0104)] ] /dt exch def
   0 1 2 { /k exch def /dyy dy 8.4 sub k cld mul sub def
     0.45 setgray /CR csz F cx cgut add dyy moveto dt k 2 mul get show 0 setgray
     0 1 3 { /m exch def cx cgut add 20 m 9 mul add cch mul add dyy moveto dt k 2 mul 1 add get m get rshow } for
   } for } def
 [ (16) (/WQ [)
-  (17) ([[0.00241668 0.00436529 0.00353898 0.00237025 ... 0.0012341])
-  (18) ([<92a17c888b708f7c23077585b2b3418c5c1e784b...> <b39d...> ...]]) ]
+  (17) ([[0.00261005 0.00431596 0.00340043 0.00252913 ... 0.0012534])
+  (18) ([<96917e84906c8a8537147183bfa939875d25794a...> <ae99...> ...]]) ]
 (^Weights ^are ^bytes. For each matrix row, export.py takes the largest absolute weight m and stores scale~=~m/127. Each weight is rounded to an integer from -127 to 127, plus 128, and written as one byte of a hex string. Two hex characters per weight: that is most of the file.)
 xrow
 
-(THE PROGRAM, LINES 107 TO 454) xsec
-[ (128) (% o x M mv  ;  M = [scales rows], rows ... offset by 128)
-  (129) (/@@mv@@ { /mM exch def /mx exch def /mo exch def)
-  (130) (  /mS mM 0 get def /mQ mM 1 get def /mn mx length 1 sub def)
-  (131) (  /msx 0 mx { add } forall 128 mul def)
-  (132) (  0 1 mQ length 1 sub { /mi exch def /mrow mQ mi get def)
-  (133) (    0 0 1 mn { dup mrow exch get exch mx exch get mul add } for)
-  (134) (    msx sub mS mi get mul mo mi 3 -1 roll put } for)
-  (135) (} bind def) ]
+(THE PROGRAM, LINES 107 TO 455) xsec
+[ (129) (% o x M mv  ;  M = [scales rows], rows ... offset by 128)
+  (130) (/@@mv@@ { /mM exch def /mx exch def /mo exch def)
+  (131) (  /mS mM 0 get def /mQ mM 1 get def /mn mx length 1 sub def)
+  (132) (  /msx 0 mx { add } forall 128 mul def)
+  (133) (  0 1 mQ length 1 sub { /mi exch def /mrow mQ mi get def)
+  (134) (    0 0 1 mn { dup mrow exch get exch mx exch get mul add } for)
+  (135) (    msx sub mS mi get mul mo mi 3 -1 roll put } for)
+  (136) (} bind def) ]
 (^mv ^does ^the ^heavy ^lifting. Matrix times vector: about 259,000 multiply-adds per token run through these eight lines. `get on a string returns a byte as an integer. Rather than subtract 128 from every byte, mv takes the raw dot product, subtracts `msx \(128 times the sum of the input\), then applies the row's scale.)
 xrow
 
-[ (138) (/rope { /rn exch def /rv exch def)
-  (139) (  0 2 rn 1 sub { /ri exch def)
-  (140) (    /hd ri HS mod def)
-  (141) (    pos 10000 hd HS div exp div @@57.29577951@@ mul /ang exch def)
-  (142) (    /fcr ang @@cos@@ def /fci ang @@sin@@ def) ]
+[ (139) (/rope { /rn exch def /rv exch def)
+  (140) (  0 2 rn 1 sub { /ri exch def)
+  (141) (    /hd ri HS mod def)
+  (142) (    pos 10000 hd HS div exp div @@57.29577951@@ mul /ang exch def)
+  (143) (    /fcr ang @@cos@@ def /fci ang @@sin@@ def) ]
 (^RoPE, ^in ^degrees. Rotary embeddings turn query/key pairs by `pos~/~10000^\(hd/8\) radians, but PostScript's `sin and `cos take degrees. Hence 57.29577951 \(180/pi\). Without it, every position would get the wrong rotation.)
 xrow
 
-[ (117) (SEED @@srand@@ 4 { rand pop } repeat)
-  (203) (/r @@rand@@ 2147483647 div ssum mul def /cum 0 def)
+[ (118) (SEED @@srand@@ 4 { rand pop } repeat)
+  (204) (/r @@rand@@ 2147483647 div ssum mul def /cum 0 def)
   () (  /pick V 1 sub def)
-  (204) (0 1 V 1 sub { /j exch def /cum cum logits j get add def)
+  (205) (0 1 V 1 sub { /j exch def /cum cum logits j get add def)
   () (  cum r gt { /pick j def exit } if } for) ]
-(^Sampling ^with ^rand. The logits become a softmax at temperature 0.8. PostScript's built-in `rand picks a point along the total, and the loop walks the running sum until it passes it. Line 117 skips four tiny first draws. Seed 42: same interpreter, same story.)
+(^Sampling ^with ^rand. The logits become a softmax at temperature 0.8. PostScript's built-in `rand picks a point along the total, and the loop walks the running sum until it passes it. Line 118 skips four tiny first draws. Seed 42: same interpreter, same story.)
 xrow
 
-[ (256) (% ... typesetting: the same print job lays out the page ...)
-  (367) (fs /Times-Roman F ...)
-  (448) (9 /Helvetica-Bold F 72 79 moveto \(Host compute: ...\) show)
-  (452) (@@showpage@@) ]
+[ (257) (% ... typesetting: the same print job lays out the page ...)
+  (368) (fs /Times-Roman F ...)
+  (449) (9 /Helvetica-Bold F 72 79 moveto \(Host compute: ...\) show)
+  (453) (@@showpage@@) ]
 (^Then, ^and ^only ^then, ^toner. After 200 tokens \(or an end-of-story token\), the same job word-wraps the story in Times-Roman, draws the run card and calls `showpage. Until then, the printer was just a computer.)
 xrow
 /rowsend ry def
@@ -458,8 +458,8 @@ LM PBY2 14 sub CW 14 rectp fill
 1 setgray /HB 7 F LM 10 add PBY2 9.6 sub moveto (PRINT IT YOURSELF) 1 tshow
 /H 6.6 F RM 10 sub PBY2 9.6 sub moveto (BRING YOUR OWN PRINTER) 0.8 rtshow 0 setgray
 /CB 10.5 F LM 12 add PBY2 33 sub moveto (nc <printer-ip> 9100 < toner1.ps) show
-0.4 setgray /H 6.6 F RM 12 sub PBY2 27.5 sub moveto (TONER-1 Pro: toner1_15M.ps, 15M parameters, 31.6 MB.) rshow
-RM 12 sub PBY2 36 sub moveto (Same command. Much slower.) rshow 0 setgray
+0.4 setgray /H 6.6 F RM 12 sub PBY2 27.5 sub moveto (TONER-1 Pro: toner1_pro.ps, 12.2M parameters, 24.9 MB, ours.) rshow
+RM 12 sub PBY2 36 sub moveto (Same command. About 28 times slower.) rshow 0 setgray
 LM 12 add RM 12 sub PBY2 44 sub 0.4 hline
 [ (^Needs ^real ^PostScript. A PostScript interpreter, Level 2 or later, is required. PCL- or GDI-only printers may print the file as raw text.)
   (^Expect ^minutes. An estimated 0.3 to 5 tok/s is roughly 1 to 10 minutes per 200-token page. It is thinking.)
@@ -481,7 +481,7 @@ gsave 0.925 setgray LM BB CW STH rectp fill grestore
   0.7 setlinewidth bxx byy 6.4 6.4 rectp gsave 1 setgray fill grestore stroke
   bck { 1.1 setlinewidth newpath bxx 1.3 add byy 3.2 add moveto bxx 2.8 add byy 1.4 add lineto bxx 5.4 add byy 5.6 add lineto stroke } if
   0.7 setlinewidth } bind def
-/TR 8 F (Verified in Ghostscript 10.07: 200 tokens, about 55 tok/s, about 3.5 MB of VM) /st1 exch def
+/TR 8 F (Verified in Ghostscript 10.07: 200 tokens, about 80 tok/s, about 3.5 MB of VM) /st1 exch def
 /TB 8 F (Not yet run on a physical printer) /st2 exch def
 /st2x RM 10 sub st2 sw sub def
 LM 62 add BB 6.6 add true box6

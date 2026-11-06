@@ -2,34 +2,38 @@
 # build.sh: assemble the print jobs from their parts into build/, then compare each with the shipped
 # copy in print-jobs/. It only writes files; nothing is printed or sent anywhere.
 #
-#   build/TONER-1_print-job.ps      DSC header + build/weights.ps (tools/export.py) + engine/engine2.ps
+#   build/TONER-1_print-job.ps      DSC header + build/weights.ps (tools/export.py) + a MODELNAME line + engine/engine2.ps
+#   build/TONER-1-Pro_print-job.ps  DSC header + build/weights_pro.ps + a MODELNAME line + engine/engine2.ps
+#                                   (only if build/weights_pro.ps exists; about 24.9 MB)
 #   build/TONER-1-V_print-job.ps    story weights (line-wrapped by tools/wrapws.py) + engine2.ps (its own page
 #                                   turned off) + engine/doodle_weights.ps + doodle engine + engine/story_page.ps
 #   build/doodle_engine.ps          engine/doodle_engine.in.ps with engine2.ps's forward pass spliced in
 #   build/sample_sheet.ps           18 classes x 4 doodles (doodle model only)
 #   build/blind_grid.ps             the 36-cell blind test grid (contains the answer key)
-#   build/TONER-1-Pro_print-job.ps  only if build/weights15M.ps exists (about 31.6 MB)
 #
-# usage (from anywhere):  sh tools/build.sh
-# needs: build/weights.ps (python3 tools/export.py checkpoints/stories260K.bin checkpoints/tok512.bin build/weights.ps)
+# usage (from anywhere):  sh tools/build.sh      (sh tools/rebuild.sh runs every step from a fresh clone)
+# needs: build/weights.ps, and build/weights_pro.ps for Pro (see README, "Reproduce")
 set -e
 cd "$(dirname "$0")/.."
 PY=${PYTHON:-python3}
 B=build
 E=engine
-SW=$B/weights.ps            # stories260K int8 weights + vocab
+SW=$B/weights.ps            # TONER-1 int8 weights + vocab (stories260K, printer fine-tune)
+PW=$B/weights_pro.ps        # TONER-1 Pro int8 weights + vocab (our 12M model and tokenizer)
 DW=$E/doodle_weights.ps     # TONER-1-V int8 weights: defines only /DOODLE
-[ -f "$SW" ] || { echo "missing $SW: run tools/fetch_checkpoints.sh and tools/export.py first (see README)" >&2; exit 1; }
+[ -f "$SW" ] || { echo "missing $SW: run sh tools/rebuild.sh, or the steps in the README" >&2; exit 1; }
 mkdir -p $B
 
-# ---------------- TONER-1 (and Pro): header + weights + engine2.ps
-mk() { # title weights out
+# ---------------- TONER-1 and Pro: header + weights + a MODELNAME line (the page footer) + engine2.ps
+mk() { # title weights out modelname
   { printf '%%!PS-Adobe-3.0\n%%%%Title: %s\n%%%%Creator: TONER-1 export.py + engine2.ps\n%%%%BoundingBox: 0 0 612 792\n%%%%LanguageLevel: 2\n%%%%EndComments\n' "$1"
-    tail -n +3 "$2"; cat $E/engine2.ps; printf '%%%%EOF\n'; } > "$3"
+    tail -n +3 "$2"; printf '/MODELNAME (%s) def\n' "$4"; cat $E/engine2.ps; printf '%%%%EOF\n'; } > "$3"
 }
-mk 'TONER-1 (stories260K int8, PostScript inference)' $SW $B/TONER-1_print-job.ps
-if [ -f $B/weights15M.ps ]; then
-  mk 'TONER-1 Pro (stories15M int8, PostScript inference)' $B/weights15M.ps $B/TONER-1-Pro_print-job.ps
+mk 'TONER-1 (stories260K printer fine-tune, int8, PostScript inference)' $SW $B/TONER-1_print-job.ps 'stories260K printer-tuned'
+if [ -f $PW ]; then
+  mk 'TONER-1 Pro (12M int8, PostScript inference)' $PW $B/TONER-1-Pro_print-job.ps 'TONER-1 Pro 12M'
+else
+  echo "note: no $PW, so TONER-1 Pro is not built (see README, \"Reproduce\")"
 fi
 
 # ---------------- TONER-1-V
@@ -49,7 +53,7 @@ hdr() { # title
 
 # the combined print job: story first (engine2.ps generates into TEXT; PAGE false skips its own page),
 # then the doodle model, the router and the illustrated page
-{ printf '%%!PS-Adobe-3.0\n%%%%Title: TONER-1-V (stories260K story + TONER-1-V doodle, int8, PostScript inference)\n'
+{ printf '%%!PS-Adobe-3.0\n%%%%Title: TONER-1-V (stories260K printer fine-tune story + TONER-1-V doodle, int8, PostScript inference)\n'
   printf '%%%%Creator: TONER-1 export.py + engine2.ps; TONER-1-V export.py + doodle_engine.ps + story_page.ps\n'
   printf '%%%%BoundingBox: 0 0 612 792\n%%%%LanguageLevel: 2\n'
   printf '%%%%DocumentNeededResources: font Helvetica Helvetica-Bold Times-Roman Times-Italic Courier\n%%%%EndComments\n'
@@ -61,15 +65,11 @@ hdr() { # title
   printf '%%%%EOF\n'; } > $B/TONER-1-V_print-job.ps
 
 # ---------------- compare with the shipped jobs
-for j in TONER-1_print-job.ps TONER-1-V_print-job.ps; do
+st=0
+for j in TONER-1_print-job.ps TONER-1-Pro_print-job.ps TONER-1-V_print-job.ps; do
+  [ -f $B/$j ] || continue
   if cmp -s $B/$j print-jobs/$j; then echo "$j: byte-identical to print-jobs/$j"
-  else echo "$j: DIFFERS from print-jobs/$j"; fi
+  else echo "$j: DIFFERS from print-jobs/$j"; st=1; fi
 done
-if [ -f $B/TONER-1-Pro_print-job.ps ]; then
-  # the Pro job is not in this repo (31.6 MB); this is the MD5 of the reference build
-  want=245f132c2474045f88b4611f70531d55
-  got=$( (md5sum $B/TONER-1-Pro_print-job.ps 2>/dev/null || md5 -r $B/TONER-1-Pro_print-job.ps) | cut -d' ' -f1)
-  if [ "$got" = "$want" ]; then echo "TONER-1-Pro_print-job.ps: MD5 $got matches the reference Pro build"
-  else echo "TONER-1-Pro_print-job.ps: MD5 $got (reference Pro build: $want)"; fi
-fi
 ls -l $B/*.ps
+exit $st

@@ -96,7 +96,7 @@ TVprint
 /TV-TI /Times-Italic refont /TV-H /Helvetica refont
 
 /PRO NPARAMS 1000000 gt def
-/MODELNAME PRO { (stories15M) } { (stories260K) } ifelse def
+/MODELNAME where { pop } { /MODELNAME (stories260K printer-tuned) def } ifelse   % story weights: Karpathy's stories260K, printer fine-tune
 /dot ( \264 ) def
 /DISP DNAME (teddy-bear) eq { (teddy bear) } { DNAME } ifelse def
 /ART DISP 0 get dup 97 eq 1 index 101 eq or 1 index 105 eq or 1 index 111 eq or exch 117 eq or { (an ) } { (a ) } ifelse def

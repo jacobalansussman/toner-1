@@ -26,8 +26,7 @@ Everything here was run in local Ghostscript only. No script sends anything to a
 You need Python with `torch`, `numpy` and `pillow`, plus Ghostscript. Run these from the repo root:
 
 ```sh
-sh tools/fetch_checkpoints.sh && mkdir -p build
-python3 tools/export.py checkpoints/stories260K.bin checkpoints/tok512.bin build/weights.ps
+sh tools/rebuild.sh        # writes build/weights.ps (the TONER-1 story weights) and the print jobs
 PYTHON=/path/to/venv/bin/python sh pixelart/src/reproduce.sh
 ```
 
@@ -51,7 +50,7 @@ To run the checks, first run `sh tools/build.sh`, which writes `build/doodle_eng
   - the most likely patch token agrees at 66 of 66 positions on all 3 sequences
   - the results are bit-identical when the story model runs first in the same job, and the story model's own logits are unchanged after the doodle runs
 - **It is exactly float32** (`check/f32_emulate.py`). A numpy re-implementation of Ghostscript's arithmetic (float32 reals, PostScript loop order) reproduces Ghostscript's logits bit for bit, for all 3 x 66 x 36 values. So the 4.2e-5 gap is all float32 rounding.
-- **The sampler, exactly** (`check/sampler_emulate.py`). This recreates doodles in Python with Ghostscript's `rand` (Park-Miller, `srand` plus 4 discarded draws). The 72 sample-sheet doodles and the 3 story-page doodles all match Ghostscript's, 64 of 64 patches each.
+- **The sampler, exactly** (`check/sampler_emulate.py`). This recreates doodles in Python with Ghostscript's `rand` (Park-Miller, `srand` plus 4 discarded draws). The 72 sample-sheet doodles and the 3 story-page doodles (seeds 7, 4 and 6) all match Ghostscript's, 64 of 64 patches each.
 - **The sampler, statistically** (`check/bench_judge.py`). The judge CNN identifies 77.8% of 288 PostScript doodles generated at T 0.9, against 77.1% for the Python int8 sampler. `check/seed_structure.py` finds that consecutive seeds do not make near-duplicate doodles.
 - **Level 2 only** (`python3 -I tools/names_used.py print-jobs/TONER-1-V_print-job.ps`). This lists every name the job takes from the interpreter. They are all Level 1 operators, plus `rectstroke` (Level 2).
 
@@ -63,7 +62,7 @@ To run the checks, first run `sh tools/build.sh`, which writes `build/doodle_eng
 | Sample sheet, 72 doodles | 210 | 0.31 |
 | Blind grid, 36 doodles | 225 | 0.28 |
 
-The story model in the same job generates 200 tokens in 2.6 to 3.3 s (61 to 78 tok/s). A whole illustrated page takes about 4 s. A printer is estimated to take about 1 to 15 minutes per illustrated page, assuming the same 0.3 to 5 tok/s as TONER-1. That has not been measured.
+The story model in the same job (the TONER-1 fine-tune) generates about 80 tok/s. A whole illustrated page takes about 2.8 s. A printer is estimated to take about 1 to 15 minutes per illustrated page, assuming the same 0.3 to 5 tok/s as TONER-1. That has not been measured.
 
 ## Blind test
 
@@ -71,7 +70,7 @@ The test used 36 doodles, 2 per class, shuffled, with seeds from one fixed RNG (
 
 ## Pages and seeds
 
-The illustrated story pages use seeds 7, 14 and 25, with story TEMP 0.8, STEPS 200 and doodle DTEMP 0.9. To pick them, the combined job was run for 24 seeds (1 to 25, except 22). Twenty of those stories named a drawable noun. Three of the twenty, each from a different class and each legible, were chosen. The sample sheet uses seeds 1 to 72 in order, with nothing re-rolled. At the default seed 42 in Ghostscript, the story names nothing drawable, so the job falls back to class `42 mod 18`, which is a frog.
+The illustrated story pages use seeds 7 (a dog, word 23 of 89), 4 (the sun) and 6 (a fish), with story TEMP 0.8, STEPS 200 and doodle DTEMP 0.9. They tell TONER-1's printer stories. To pick them, the combined job was run for 24 seeds (1 to 21 and 23 to 25). Nineteen of those stories named a drawable noun, and five fell back to `seed mod 18`. We chose three of the nineteen, each from a different class and each legible. Seed 2 (cake) was passed over because its story calls Lily "a calculator", and the router has no keyword for that. Before the printer fine-tune the pages were seeds 7 (a house), 14 (a tree) and 25 (a car); with the fine-tune, seeds 14 and 25 draw a hard-to-read cat and a second dog, so they were replaced. The sample sheet uses seeds 1 to 72 in order, with nothing re-rolled, and it runs the doodle model only, so it did not change. At the default seed 42 in Ghostscript, the story names nothing drawable, so the job falls back to class `42 mod 18`, which is a frog.
 
 ## Known limitations
 

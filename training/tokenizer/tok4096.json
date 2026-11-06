@@ -1,0 +1,16 @@
+{
+ "vocab_size": 4096,
+ "sample": 300000,
+ "seed": 0,
+ "printer_repeat": 60,
+ "tinystories_stories": 299945,
+ "tinystories_words": 48185526,
+ "nonascii_dropped": 32,
+ "printer_stories": 601,
+ "printer_word_share": 0.0852,
+ "user_defined_symbols": [
+  "\u2581toner",
+  "\u2581Toner"
+ ],
+ "spm_settings": "llama2.c tinystories.py train_vocab"
+}

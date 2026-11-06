@@ -1,10 +1,13 @@
 # downloaded checkpoints (tools/fetch_checkpoints.sh)
-checkpoints/*.bin
-checkpoints/*.part
+checkpoints/
+# training work directory (datasets, tokenized data, checkpoints, logs) and the OpenRouter key file
+training/work/
+training/.env
+.env
 # build outputs (tools/build.sh, tools/make_pages.sh, pixelart/results/build_results.sh)
 build/
 # downloaded and processed Quick, Draw! data (pixelart/src/fetch_data.py, preprocess.py)
-data/
+/data/
 pixelart/data/
 # pipeline outputs; the shipped export metadata is kept
 pixelart/out/*

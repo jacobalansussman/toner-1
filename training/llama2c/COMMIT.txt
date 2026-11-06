@@ -1,0 +1,10 @@
+These files are from Andrej Karpathy's llama2.c (MIT; LICENSE in this folder), commit
+350e04fe35433e6d2941dce5a1f53308f87058eb (2024-05-29, "Merge pull request #514"), fetched from
+raw.githubusercontent.com/karpathy/llama2.c/350e04fe35433e6d2941dce5a1f53308f87058eb/.
+
+  model.py, export.py, configurator.py   unchanged (md5 479e29be..., 299e7cc2..., 3a0b8a88...)
+  train.py                               patched for TONER-1 Pro: PATCH_train.diff
+  tinystories.py                         patched for TONER-1 Pro: PATCH_tinystories.diff
+
+llama2.c's tokenizer.py is not included: it carries a Meta / Llama 2 license header, and nothing here needs it.
+The TONER-1 Pro tokenizer is trained and exported by training/scripts/pro_tokenizer.py instead.

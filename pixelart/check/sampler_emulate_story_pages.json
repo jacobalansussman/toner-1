@@ -1,19 +1,19 @@
 [
  {
-  "cls": 11,
+  "cls": 1,
   "seed": 7,
   "identical": true,
   "n_diff": 0
  },
  {
-  "cls": 9,
-  "seed": 14,
+  "cls": 8,
+  "seed": 4,
   "identical": true,
   "n_diff": 0
  },
  {
-  "cls": 12,
-  "seed": 25,
+  "cls": 3,
+  "seed": 6,
   "identical": true,
   "n_diff": 0
  }

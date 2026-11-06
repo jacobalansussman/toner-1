@@ -4,7 +4,7 @@
 # are not inflated by each other. Local Ghostscript only: nothing is printed or sent to any device.
 # Writes build/pages/runs.tsv (one row per run) and a .log per page (the job's stdout).
 #   sh tools/make_pages.sh          everything except the Pro page
-#   PRO=1 sh tools/make_pages.sh    also the Pro page (needs build/TONER-1-Pro_print-job.ps; about 2 minutes)
+#   PRO=1 sh tools/make_pages.sh    also the Pro page (TONER-1 Pro, about 70 s in Ghostscript)
 # Run tools/build.sh first. Sampled stories depend on the interpreter's rand, so they match the
 # shipped pages only under the same Ghostscript (10.07.1 was used).
 set -e
@@ -37,14 +37,14 @@ run 04_story_seed40_t0.8.pdf $B/TONER-1_print-job.ps 40 0.8
 run 05_story_seed22_t0.8.pdf $B/TONER-1_print-job.ps 22 0.8
 run 06_story_greedy_t0.pdf   $B/TONER-1_print-job.ps 42 0
 run 07_story_seed6_t1.4.pdf  $B/TONER-1_print-job.ps 6 1.4
-if [ -n "$PRO" ]; then run 08_story_pro-15M_seed42_t0.8.pdf $B/TONER-1-Pro_print-job.ps 42 0.8; fi
+if [ -n "${PRO:-}" ]; then run 08_story_pro-12M_seed42_t0.8.pdf $B/TONER-1-Pro_print-job.ps 42 0.8; fi
 
 # ---- TONER-1-V (docs/TONER-1-V/)
 run V01_pareto_frontier.pdf docs/TONER-1-V/src/pareto.ps
 run V02_sample_sheet.pdf $B/sample_sheet.ps
 runv V03_story_illustrated_seed7.pdf 7
-runv V04_story_illustrated_seed14.pdf 14
-runv V05_story_illustrated_seed25.pdf 25
+runv V04_story_illustrated_seed4.pdf 4
+runv V05_story_illustrated_seed6.pdf 6
 # the blind grid that the evaluator saw (unlabeled; the key is in pixelart/eval_key/)
 run blind_grid.pdf $B/blind_grid.ps
 # 06_blind_test_results.pdf is built by pixelart/results/build_results.sh
