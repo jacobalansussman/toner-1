@@ -32,7 +32,7 @@ for byte; the MD5s are below.
 | `llama2c/` | llama2.c's `model.py`, `export.py`, `configurator.py`, and `train.py` and `tinystories.py` with our patches (`PATCH_*.diff`). MIT. Its `tokenizer.py` is left out (see `COMMIT.txt`) |
 | `tokenizer/` | The Pro tokenizer: `tok4096.model` (SentencePiece), `tok4096.bin` (llama2.c format, what the print job embeds), `tok4096.vocab`, `tok4096.json` |
 | `data/printer_train.txt`, `data/printer_val.txt` | The printer stories, 8,757 train and 461 validation, in TinyStoriesV2's layout (each story, then a line `<\|endoftext\|>`) |
-| `data/pilot_printer_stories_601.jsonl` | The first 601 generated stories (id and text), used only to train the tokenizer |
+| `data/pilot_printer_stories_601.jsonl` | The first 601 generated stories (id and text), used, repeated 60 times, to train the Pro tokenizer. 590 of them are also in the dataset (568 train, 22 validation); the other 11 failed the final filters |
 | `data/prompt_lists.json` | The generator's prompt ingredients: system prompt, 68 themes, word lists, features, filters, one example prompt |
 
 ## Setup
