@@ -1,0 +1,6 @@
+TONER-1 | 260032 params | int8 | PostScript-native inference
+Once upon a time, there was a little girl named Lily. She loved to bring paper to a avocado. She made the card and the bridge dull. Lily had never to print like a second card, but she couldn't record it.
+One day, Lily saw a small table. "I wish I could talk to me!" said Lily. Her mom said, "No, it's mine." Lily held her hand and cried. Then she tried again. The paper kept it moving and the table could not catch it.
+Lily cried
+---
+200 tokens in 217.235 s = 0.920662 tok/s [STEPS limit]

@@ -1,0 +1,7 @@
+{"t": 0.958, "data": "TONER-1 | 260032 params | int8 | PostScript-native inference\r\n"}
+{"t": 1.79, "data": "Once"}
+{"t": 218.268, "data": " upon a time, there was a little girl named Lily. She loved to bring paper to a avocado. She made the card and the bridge dull. Lily had never to print like a second card, but she couldn't record it.\r\nOne day, Lily saw a small table. \"I wish I could talk to me!\" said Lily. Her mom said, \"No, it's mine.\" Lily held her hand and cried. Then she tried again. The paper kept it moving and the table could not catch it.\r\nLily cried\r\n---\r\n200 tokens in 217.806 s = 0.918248 tok/s [STEPS limit]\r\n"}
+{"t": 218.526, "data": "\r\nTONER-1-V | 103536 params | router: no drawable noun; class = DSEED mod 18 = 6 -> frog | seed 42 | T 0.9\r\n"}
+{"t": 243.275, "data": " ................\r\n ....######......\r\n ...##.....#.....\r\n ...#......#.....\r\n ..#........##...\r\n ..#.......###...\r\n ..#.......####..\r\n ..#.......####..\r\n ..##.......##...\r\n ...####....#....\r\n ......#....#....\r\n ....###....#....\r\n ..##..##..##....\r\n .##...#####.....\r\n .#..............\r\n ................\r\n64 patch tokens: 0 0 3 3 3 0 0 0 0 5 8 0 0 10 0 0 0 10 0 0 0 7 10 0 0 10 0 0 0 15 15 0 0 13 3 2 0 5 8 0 0 0 3 10 0 5 0 0 1 14 0 15 3 14 0 0 4 0 0 0 0 0 0 0 \r\n---\r\n64 patch tokens (65 forward passes) in 24.77 "}
+{"t": 243.278, "data": "s = 2.58377 tok/s\r\n"}
+{"t": 244.248, "data": "VM: 1674376 bytes used of 109477988 allocated (save level 2)\r\n"}

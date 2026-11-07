@@ -62,7 +62,7 @@ To run the checks, first run `sh tools/build.sh`, which writes `build/doodle_eng
 | Sample sheet, 72 doodles | 210 | 0.31 |
 | Blind grid, 36 doodles | 225 | 0.28 |
 
-The story model in the same job (the TONER-1 fine-tune) generates about 80 tok/s. A whole illustrated page takes about 2.8 s. A printer is estimated to take about 1 to 15 minutes per illustrated page, assuming the same 0.3 to 5 tok/s as TONER-1. That has not been measured.
+The story model in the same job (the TONER-1 fine-tune) generates about 80 tok/s. A whole illustrated page takes about 2.8 s. On an HP Color LaserJet Pro MFP M281fdw, by the printer's own clock, the story took 3:38 and the doodle 25 s (64 patch tokens, 65 forward passes, 2.58 tok/s). The job took 4:04 from send to finished job.
 
 ## Blind test
 
@@ -74,6 +74,6 @@ The illustrated story pages use seeds 7 (a dog, word 23 of 89), 4 (the sun) and 
 
 ## Known limitations
 
-- `rand` is implementation-defined, so on a printer the same seed tells a different story and draws a different doodle.
+- `rand` is implementation-defined, so another interpreter may tell a different story and draw a different doodle from the same seed. The HP above matched Ghostscript at seed 42: the story, the router line, the frog and its 64 patch tokens were byte-identical apart from line endings (the printer sends CRLF).
 - Animals (dog, rabbit, frog, bird, duck) often come out as scribbles. That is a limit of the 16x16 model, not of the PostScript port.
-- `usertime` ticks in 10 ms steps, so the doodle tok/s printed on a single story page is only good to about ±4%.
+- In Ghostscript, `usertime` ticks in 10 ms steps, so the doodle tok/s printed on a Ghostscript story page (a doodle of about 0.25 s) is only good to about ±4%. The HP's 25 s doodle is not limited this way.

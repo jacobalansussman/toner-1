@@ -12,10 +12,24 @@ That's the parody. Here is the real part. TONER-1 is a small language model whos
 **Status**
 
 <!-- PRINT_DAY:status -->
-Tested in Ghostscript; the first real printer run is pending.
+Printed on an HP Color LaserJet Pro MFP M281fdw on 2026-11-05: 200 tokens in 3:37 by the printer's own clock (0.92 tok/s), 3:39 from send to finished job.
 <!-- /PRINT_DAY:status -->
 
 <!-- PRINT_DAY:proof -->
+
+**A language model that ran on an actual printer: one print job, zero host FLOPs.**
+
+What the printer itself sent back over the network while [`print-jobs/TONER-1_print-job.ps`](print-jobs/TONER-1_print-job.ps) ran: its own output and its own timer. These are the first and last lines; the story in between is left out here.
+
+```text
+TONER-1 | 260032 params | int8 | PostScript-native inference
+200 tokens in 217.235 s = 0.920662 tok/s [STEPS limit]
+```
+
+The TONER-1-V job printed the same day, doodle included: the story in 3:38 and the doodle in 25 s by the printer's own clock, 4:04 from send to finished job.
+
+Full logs, with every byte the printer sent back and when it arrived: [`docs/printer-run-2026-11-05/`](docs/printer-run-2026-11-05/).
+
 <!-- /PRINT_DAY:proof -->
 
 **Video:** files in [`docs/media/`](docs/media/). The [MP4 version](docs/media/TONER-1_readme_loop.mp4) has the same loop as the image below.
@@ -48,7 +62,7 @@ nc <printer-ip> 9100 < print-jobs/TONER-1_print-job.ps
 lpr -P <queue> -o raw print-jobs/TONER-1_print-job.ps
 ```
 
-A printer has no command line, so to change the seed you edit the `42` in `/SEED 42 def` inside the file. The job needs a PostScript interpreter, Level 2 or later. A printer that only speaks PCL or GDI may print the file as pages of text instead. A printer is estimated to run TONER-1 at 0.3 to 5 tok/s, so a page takes roughly 1 to 10 minutes. That estimate is unmeasured, and a long job can hit the printer's job timeout or run out of memory. TONER-1 Pro is about 28 times slower and needs about 37 MB of PostScript memory in Ghostscript, so on a printer it is estimated at 20 minutes to 5 hours a page, if it fits at all. PostScript's `rand` differs between implementations, so a printer will probably tell a different story from the same seed than Ghostscript does.
+A printer has no command line, so to change the seed you edit the `42` in `/SEED 42 def` inside the file. The job needs a PostScript interpreter, Level 2 or later. A printer that only speaks PCL or GDI may print the file as pages of text instead. On an HP Color LaserJet Pro MFP M281fdw, TONER-1 wrote 200 tokens in 3:37 by the printer's own clock (0.92 tok/s), and took 3:39 from send to finished job. The TONER-1-V job took 4:04 from send to finished job. Other printers have not been tried, and a long job can hit a printer's job timeout or run out of memory. TONER-1 Pro is about 28 times slower and needs about 37 MB of PostScript memory in Ghostscript. It has not been run on a printer; on one it is estimated at 20 minutes to 5 hours a page (about 1.7 hours scaled from TONER-1's speed on the HP, also an estimate), if it fits at all. PostScript's `rand` is implementation-defined, so another interpreter may tell a different story from the same seed. At seed 42, the HP's story was byte-identical to Ghostscript's, apart from the printer's CRLF line endings.
 
 ## How it works
 
@@ -76,7 +90,7 @@ Everything below happens inside the print job. [`docs/TONER-1/01_explainer.pdf`]
 
 ## Results
 
-All measurements in this table are from Ghostscript 10.07.1 on an Apple M4 Mac. Printer tok/s has not been measured; the Status line above records the printer run.
+The Ghostscript measurements are from Ghostscript 10.07.1 on an Apple M4 Mac. The printer row is one run each of the TONER-1 and TONER-1-V jobs on an HP Color LaserJet Pro MFP M281fdw on 2026-11-05 (TONER-1 Pro was not sent): the token and doodle times are the printer's own clock, and the time from send to finished job was measured on the Mac that sent the job. The logs, with everything the printer sent back, are in [`docs/printer-run-2026-11-05/`](docs/printer-run-2026-11-05/).
 
 | | TONER-1 | TONER-1-V | TONER-1 Pro |
 |---|---|---|---|
@@ -84,7 +98,7 @@ All measurements in this table are from Ghostscript 10.07.1 on an Apple M4 Mac. 
 | Parameters | 260,032 | 103,536 (363,568 with the story model) | 12,194,688 |
 | Print job | 595,372 bytes | 859,530 bytes | 24,910,286 bytes |
 | Speed in Ghostscript | about 80 tok/s; under 4 s per page | about 0.3 s per doodle; about 2.8 s per illustrated page | about 2.8 tok/s; about 70 s per page |
-| Speed on a printer | estimated 0.3 to 5 tok/s (unmeasured) | estimated 1 to 15 min per page (unmeasured) | estimated 20 min to 5 h per page (unmeasured) |
+| Speed on the HP printer | 200 tokens in 3:37 (0.92 tok/s); 3:39 from send to finished job | story in 3:38, doodle in 25 s (2.58 tok/s); 4:04 from send to finished job | not run on a printer; estimated 20 min to 5 h per page |
 
 **Did the fine-tune make it write about printers?** Yes. Sampled from the int8 weights the way the print job samples (from BOS, temperature 0.8, up to 200 tokens), 87.3% of 300 TONER-1 stories use a printer word and 71.7% say "printer", against 3.7% and 0% for the original `stories260K`. Loss on 461 held-out printer stories fell from 1.83 to 1.23, while TinyStories validation loss rose 3.9% (1.341 to 1.393). TONER-1 Pro uses a printer word in 98% of 50 int8 samples and says "printer" in 94%.
 
@@ -121,13 +135,13 @@ The [PostScript Pareto Frontier chart](docs/TONER-1-V/01_pareto_frontier.pdf) is
 
 ## Limitations
 
-- **Printer speed is an estimate.** Printer tok/s has not been measured, so every printer speed in this repo is an estimate; the Status line above records the printer run.
+- **Printer speed comes from one printer.** TONER-1 and TONER-1-V ran once each on an HP Color LaserJet Pro MFP M281fdw. Other printers have not been tried, and TONER-1 Pro's printer speed is still an estimate.
 - **It is a 260K-parameter model.** The stories are short, simple, and often don't make sense ("She loved to bring paper to a avocado"). It mostly writes about Lily, Tim and the printer.
 - **There is no prompt.** Every story starts from the beginning-of-sequence token.
-- **Results depend on the interpreter.** `rand` is implementation-defined, so the same seed tells different stories on different interpreters. The pages in `docs/` come from Ghostscript 10.07.1.
+- **Results can depend on the interpreter.** `rand` is implementation-defined, so the same seed may tell different stories on different interpreters. On the HP, both jobs at seed 42 sent back the same story as Ghostscript 10.07.1 (and TONER-1-V the same frog), byte for byte apart from the printer's CRLF line endings. The pages in `docs/` come from Ghostscript 10.07.1. The story pages' footers, which the jobs themselves write, still say that the same seed tells a different story on another interpreter. That sentence predates the HP run, and it changes at the next rebuild of the jobs.
 - **Some characters are dropped.** Non-ASCII characters are left off the page, apart from a few punctuation marks. They still appear in the interpreter's stdout.
 - **TONER-1-V is crude.** It draws 16x16 one-bit doodles in 18 classes, and its animals are hard to recognize. The router is a keyword match, not a model, and it has no keyword for "calculator".
-- **TONER-1 Pro has never run on a printer.** "20 minutes to 5 hours" is an estimate, and a 24.9 MB job that needs about 37 MB of PostScript memory may not fit in a printer at all. Its terminal transcript still begins "TONER-1 |"; the page footer names it correctly.
+- **TONER-1 Pro has never run on a printer.** "20 minutes to 5 hours" is an estimate, and a 24.9 MB job that needs about 37 MB of PostScript memory may not fit in a printer at all. The HP that ran TONER-1 reports about 110 MB of PostScript memory; Pro was not tried on it. Scaled from TONER-1's 0.92 tok/s there, Pro would take about 1.7 hours a page (an estimate). Its terminal transcript still begins "TONER-1 |"; the page footer names it correctly.
 - **Printer compatibility.** The jobs need a PostScript interpreter, Level 2 or later. Printers that only speak PCL or GDI won't run them, and long jobs can hit a job timeout or memory limit.
 
 ## Reproduce
@@ -169,7 +183,7 @@ sh tools/build.sh                  # assembles build/*.ps and compares them with
 | [`training/`](training/) | The printer-story generator and dataset, the TONER-1 fine-tune, the Pro tokenizer and the Pro training code |
 | [`pixelart/`](pixelart/) | The TONER-1-V training pipeline, its checkpoints, the correctness checks, and the blind test with its answer key |
 | [`bench/`](bench/) | PostScript speed benchmarks for different matrix-vector idioms |
-| [`docs/`](docs/) | Release PDFs, with their PostScript sources in `docs/*/src/`. Video files go in `docs/media/` |
+| [`docs/`](docs/) | Release PDFs, with their PostScript sources in `docs/*/src/`. Video files go in `docs/media/`, and the printer's output from 2026-11-05 is in `docs/printer-run-2026-11-05/` |
 
 ### Documents
 
@@ -178,15 +192,15 @@ sh tools/build.sh                  # assembles build/*.ps and compares them with
 | [`docs/TONER-1/TONER-1_booklet.pdf`](docs/TONER-1/TONER-1_booklet.pdf) | All 10 TONER-1 pages in one PDF |
 | [`docs/TONER-1/01_explainer.pdf`](docs/TONER-1/01_explainer.pdf) | How a print job runs a language model (2 pages) |
 | [`docs/TONER-1/02_model-card-and-benchmarks.pdf`](docs/TONER-1/02_model-card-and-benchmarks.pdf) | Model card and parody benchmarks (2 pages) |
-| `docs/TONER-1/03`-`07_story_*.pdf` | Story pages printed by the TONER-1 job. The seed and temperature are in each name; `t0` means greedy |
-| [`docs/TONER-1/08_story_pro-12M_seed42_t0.8.pdf`](docs/TONER-1/08_story_pro-12M_seed42_t0.8.pdf) | One story from TONER-1 Pro |
+| `docs/TONER-1/03`-`07_story_*.pdf` | Story pages the TONER-1 job made in Ghostscript 10.07.1. The seed and temperature are in each name; `t0` means greedy |
+| [`docs/TONER-1/08_story_pro-12M_seed42_t0.8.pdf`](docs/TONER-1/08_story_pro-12M_seed42_t0.8.pdf) | One story from TONER-1 Pro, made by its job in Ghostscript |
 | [`docs/TONER-1-V/TONER-1-V_booklet.pdf`](docs/TONER-1-V/TONER-1-V_booklet.pdf) | All 6 TONER-1-V pages in one PDF |
 | [`docs/TONER-1-V/01_pareto_frontier.pdf`](docs/TONER-1-V/01_pareto_frontier.pdf) | The PostScript Pareto Frontier (parody chart) |
 | [`docs/TONER-1-V/02_sample_sheet.pdf`](docs/TONER-1-V/02_sample_sheet.pdf) | 72 doodles: 18 classes x 4, seeds 1 to 72, not edited |
 | `docs/TONER-1-V/03`-`05_story_illustrated_seed*.pdf` | The TONER-1-V job's own output for seeds 7 (a dog), 4 (the sun) and 6 (a fish) |
 | [`docs/TONER-1-V/06_blind_test_results.pdf`](docs/TONER-1-V/06_blind_test_results.pdf) | Blind identification test: 24 of 36 |
 
-These PDFs were rendered in Ghostscript before the first printer run, so they describe that run as pending.
+All of these PDFs are Ghostscript 10.07.1 renders, not scans of the pages the HP printed. The explainer, the model card and the TONER-1 booklet were updated after the printer run of 2026-11-05.
 
 The TONER-1 pages call the print job `toner1.ps`, which was its working name. It is the same file as `print-jobs/TONER-1_print-job.ps`.
 

@@ -307,8 +307,8 @@ LM RM STT 1 hline
 [ (260,032) () (parameters) (int8, one scale per row)
   (595) (KB) (the entire print job) (weights + vocab + program)
   (80) (tok/s) (in Ghostscript 10.07) (Apple-silicon Mac, measured)
-  (0.3\2615) (tok/s) (on a real printer) (estimated, not yet measured)
-  (0) (FLOPs) (on the host) (the laptop only sends bytes)
+  (0.92) (tok/s) (on a real printer) (HP M281fdw, measured)
+  (0) (FLOPs) (on the host) (the computer only sends bytes)
 ] /st exch def
 /stw CW 5 div def
 0 1 4 { /k exch def /sx LM k stw mul add def
@@ -462,8 +462,8 @@ LM PBY2 14 sub CW 14 rectp fill
 RM 12 sub PBY2 36 sub moveto (Same command. About 28 times slower.) rshow 0 setgray
 LM 12 add RM 12 sub PBY2 44 sub 0.4 hline
 [ (^Needs ^real ^PostScript. A PostScript interpreter, Level 2 or later, is required. PCL- or GDI-only printers may print the file as raw text.)
-  (^Expect ^minutes. An estimated 0.3 to 5 tok/s is roughly 1 to 10 minutes per 200-token page. It is thinking.)
-  (^Mind ^the ^limits. Long jobs can hit the job timeout or the VM limit. Ghostscript uses about 3.5~MB of VM.)
+  (^Expect ^minutes. An HP M281fdw took 3:37 for 200 tokens by its own clock, 0.92 tok/s. It is thinking.)
+  (^Mind ^the ^limits. Long jobs can hit the job timeout or the VM limit. In Ghostscript, TONER-1 uses 3.3 to 7.5~MB of VM.)
   (^Ask ^first. Only use printers you own or have permission to use. The queue behind you has feelings.) ] /notes exch def
 /nw2 CW 24 sub 16 sub 2 div def
 0 1 3 { /k exch def
@@ -481,18 +481,18 @@ gsave 0.925 setgray LM BB CW STH rectp fill grestore
   0.7 setlinewidth bxx byy 6.4 6.4 rectp gsave 1 setgray fill grestore stroke
   bck { 1.1 setlinewidth newpath bxx 1.3 add byy 3.2 add moveto bxx 2.8 add byy 1.4 add lineto bxx 5.4 add byy 5.6 add lineto stroke } if
   0.7 setlinewidth } bind def
-/TR 8 F (Verified in Ghostscript 10.07: 200 tokens, about 80 tok/s, about 3.5 MB of VM) /st1 exch def
-/TB 8 F (Not yet run on a physical printer) /st2 exch def
+/TR 8 F (Verified in Ghostscript 10.07: 200 tokens, about 80 tok/s) /st1 exch def
+/TB 8 F (Printed on an HP M281fdw, 2026-11-05: 200 tokens in 3:37) /st2 exch def
 /st2x RM 10 sub st2 sw sub def
 LM 62 add BB 6.6 add true box6
 /TR 8 F LM 73 add BB 7.3 add moveto st1 show
-st2x 11 sub BB 6.6 add false box6
+st2x 11 sub BB 6.6 add true box6
 /TB 8 F st2x BB 7.3 add moveto st2 show
 
 % ---------- footer ----------
 (Page 2 of 2) pgfoot
 /wfR /TI def /wsz 6.8 def /wld 8.4 def /wgray 0.35 def /wfC /CR def
-(Excerpts are verbatim from toner1.ps; gray `... marks trims, and long lines are re-wrapped or dedented. Prior art: int-llm-postscript \(Aug 2026\) ran a 14K-parameter microGPT in Ghostscript only; PSChess played chess on real printers. TONER-1 is built to run on an actual printer; that run is pending. Not affiliated with or endorsed by Adobe, HP, Artifex, Google, or any AI lab.)
+(Excerpts are verbatim from toner1.ps; gray `... marks trims, and long lines are re-wrapped or dedented. Prior art: int-llm-postscript \(Aug 2026\) ran a 14K-parameter microGPT in Ghostscript only; PSChess played chess on real printers. On 2026-11-05 TONER-1 ran on an actual printer, an HP Color LaserJet Pro MFP M281fdw. Not affiliated with or endorsed by Adobe, HP, Artifex, Google, or any AI lab.)
 LM 64 452 wrap
 /wgray 0 def
 pgsave restore

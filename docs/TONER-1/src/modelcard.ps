@@ -263,9 +263,9 @@ TN begin
 (Context window) { (8.5 \201 11 in. \(512 tokens\)) fseg } spec
 (KV cache) { (Persistent, archival, recyclable) fseg } spec
 (Job size) { (595 KB, one file:) fseg 8 fC (toner1.ps) fseg 8.2 fH fjoin (. Weights, vocabulary, a forward pass of about 100 lines and its own page layout) fseg } spec
-(Speed, measured) { (About 80 tok/s in Ghostscript 10.07 on an Apple-silicon Mac, in about 3.5 MB of PostScript VM) fseg } spec
-(Speed, printer) { (0.3 to 5 tok/s, estimated, not yet measured. A 200-token page takes roughly 1 to 10 minutes) fseg } spec
-(Time to first token) { (Includes fuser warm-up) fseg } spec
+(Speed, measured) { (About 80 tok/s in Ghostscript 10.07 on an Apple-silicon Mac, using 3.3 to 7.5 MB of PostScript VM) fseg } spec
+(Speed, printer) { (0.92 tok/s, measured on an HP Color LaserJet Pro MFP M281fdw: 200 tokens in 3:37 by the printer's own clock) fseg } spec
+(Time to first token) { (1.7 s on the HP, read back over the network) fseg } spec
 (Accelerator) { (The office's hottest inference chip \(fuser, typically about 200 \200C\)) fseg } spec
 (Host compute) { (0 FLOPs. The host only sends bytes:) fseg fnl 8 fC (nc <printer-ip> 9100 < toner1.ps) fseg } spec
 (Output modality) { (Native toner) fseg } spec
@@ -294,7 +294,7 @@ TN begin
 % ---- product lineup ----
 54 558 186 (PRODUCT LINEUP) sechead
 54 (TONER-1) (AVAILABLE) true (260K, PRINTER-TUNED  /  595 KB JOB)
-  { (The everyday copy-room model, now fine-tuned on printer stories. Under 4\240s per page in Ghostscript; an estimated 1\240to\24010\240minutes on a printer.) fseg } lbox
+  { (The everyday copy-room model, now fine-tuned on printer stories. Under 4\240s per page in Ghostscript; 3:37 for 200 tokens on an HP printer.) fseg } lbox
 228 (TONER-1 Pro) (EST. 20 MIN\2615 H) false (12.2M, OURS  /  24.9 MB JOB)
   { (Trained from scratch by us, 47 times the parameters. Estimated: send it after lunch, collect your story by close of business.) fseg } lbox
 402 (TONER-1 Classic) (PLANNED) false (1985 LASERWRITER  /  68000)
@@ -407,10 +407,10 @@ gx1 9 sub anw sub gy0 5 add anw 6 add 8.4 1 rf
 % ---- evaluation setup ----
 348 558 290 (EVALUATION SETUP) sechead
 /eY 285 def
-(Interpreter) { (Ghostscript 10.07, Apple-silicon Mac) fseg } erow
-(Printer) { (Office laser, PostScript emulation \(pending\)) fseg } erow
-(Speed) { (Measured in Ghostscript; printer estimated) fseg } erow
-(Paper) { (20 lb bond, US Letter, simplex) fseg } erow
+(Interpreter) { (Ghostscript 10.07, Apple-silicon Mac; HP PostScript 3017) fseg } erow
+(Printer) { (HP Color LaserJet Pro MFP M281fdw) fseg } erow
+(Speed) { (Measured in Ghostscript and on the printer) fseg } erow
+(Paper) { (US Letter, simplex) fseg } erow
 (Sampling) { (Temperature 0.8, seed 42, 200 steps) fseg } erow
 (Prompt) { (None. Every run starts from BOS.) fseg } erow
 (Ambient) { (Room temp.; fuser typically about 200 \200C) fseg } erow
@@ -423,9 +423,9 @@ gx1 9 sub anw sub gy0 5 add anw 6 add 8.4 1 rf
 % ---- footnotes ----
 54 558 124 0.6 0 hl
 54 558 114 8.6 fl-begin 0 setgray 6.7 fHB
-(Parody benchmarks. Not real evaluations. TONER-1 speed measured in Ghostscript; printer speed estimated.) fseg
+(Parody benchmarks. Not real evaluations. TONER-1 speed measured in Ghostscript and on one printer.) fseg
 6.7 fH 0.2 setgray
-(Frontier models from major labs were not run on these benchmarks and are not named; N/A means only that they cannot execute inside a print job. Figure 2 is parody data. TONER-1 is Karpathy's llama2.c stories260K, fine-tuned by us on printer stories, exported to int8 and run by a PostScript forward pass. TONER-1 Pro is a 12.2M-parameter model we trained from scratch, with our own 4,096-token tokenizer. Prior art: int-llm-postscript \(Aug 2026\) ran a 14K-parameter microGPT in PostScript under Ghostscript, and PSChess played chess on real printers. TONER-1 is built to run on an actual printer; that run is pending. Only use printers you own or have permission to use.) fseg
+(Frontier models from major labs were not run on these benchmarks and are not named; N/A means only that they cannot execute inside a print job. Figure 2 is parody data. TONER-1 is Karpathy's llama2.c stories260K, fine-tuned by us on printer stories, exported to int8 and run by a PostScript forward pass. TONER-1 Pro is a 12.2M-parameter model we trained from scratch, with our own 4,096-token tokenizer. Prior art: int-llm-postscript \(Aug 2026\) ran a 14K-parameter microGPT in PostScript under Ghostscript, and PSChess played chess on real printers. On 2026-11-05 TONER-1 ran on an actual printer, an HP Color LaserJet Pro MFP M281fdw. Only use printers you own or have permission to use.) fseg
 
 showpage
 end
